@@ -3,6 +3,8 @@ import pytest
 from lux.game_map import Position, Resource
 from Cluster.clusterController import ClusterController
 
+
+# TODO: Refactor Game API for these classes
 class Cell:
     def __init__(self, resource: Resource, x, y) -> None:
         self.resource = resource
@@ -44,11 +46,14 @@ class TestClass:
                       '011110',
                       '000000']
         
-        width = 6 
-        height = 4
+        width = 4 
+        height = 6
 
-        # List to be compared in Unit Test
-        lst = [[[1, 1], [1, 2], [2, 1], [2, 2], [3, 1], [3, 2], [4, 1], [4, 2]]]
+        # Variables to be compared in Unit Test
+        cluster = [[[1, 1], [1, 2], [1, 3], [1, 4], [2, 3], [2, 2], [2, 1], [2, 4]]]
+        perimeter = [[0, 1], [0, 2], [0, 3], [0, 4],
+                     [1, 0], [1, 5], [2, 0], [2, 5], 
+                     [3, 1], [3, 2], [3, 3], [3, 4]]
         
         mapp = Map([[Cell(Resource('uranium', 0), x, y) for y in range(height)] for x in range(width)])
 
@@ -68,7 +73,12 @@ class TestClass:
                 current_cluster.append([cell.pos.x, cell.pos.y])
             return_result.append(current_cluster)
 
-        assert(return_result == lst)
+        print(return_result)
+        assert(return_result == cluster)
+
+        perimeter_returned = [[cell[0], cell[1]] for cell in Controller.clusterDict[0].get_perimeter(game_state)]
+        print(perimeter_returned)
+        assert(perimeter_returned == perimeter)
 
 
 

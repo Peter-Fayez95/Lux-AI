@@ -12,6 +12,9 @@ class Resource:
         self.type = r_type
         self.amount = amount
 
+    def __eq__(self, resource: object):
+        return self.type == resource.type and self.amount == resource.amount
+
 
 class Cell:
     def __init__(self, x, y):
@@ -21,6 +24,13 @@ class Cell:
         self.road = 0
     def has_resource(self):
         return self.resource is not None and self.resource.amount > 0
+    
+    def __str__(self):
+        return f"{self.pos}"
+    
+    def __eq__(self, cell):
+        return self.pos == cell.pos and self.resource == cell.resource \
+            and self.citytile == cell.citytile and self.road == cell.road
 
 
 class GameMap:
@@ -38,6 +48,9 @@ class GameMap:
 
     def get_cell(self, x, y) -> Cell:
         return self.map[y][x]
+    
+    def get_cell(self, pos):
+        return self.map[pos.x][pos.y]
 
     def _setResource(self, r_type, x, y, amount):
         """

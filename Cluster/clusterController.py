@@ -23,7 +23,9 @@ class ClusterController:
     # This method is only called once (at the game start)
     def getClustersRolling(self, width, height, game_state):
         visited_cell = [[False for _ in range(height)] for _ in range(width)]
-            
+
+
+        # TODO: Need to refactor this function using helper_functions    
         def dfs(x, y, cluster_cells):
             visited_cell[x][y] = True
 
@@ -40,6 +42,13 @@ class ClusterController:
                     
                     nx, ny = x + dx, y + dy
                     if self.inside_map(nx, ny, width, height) and not visited_cell[nx][ny]:
+
+
+                        '''
+                        There may be some errors when evaluating game_state.map.get_cell
+                        This is because in the lux API, get_cell returns map[y][x] not map[x][y]
+                        This is still not tested on the actual API (unittests don't reflect lux API)
+                        '''
                         neighbor_cell = game_state.map.get_cell(nx, ny)
 
                         # Only consider cells with resources
@@ -106,4 +115,5 @@ class ClusterController:
 
         if self.rank[ClusterRep1.pos.x][ClusterRep1.pos.y] == self.rank[ClusterRep2.pos.x][ClusterRep2.pos.y]:
             self.rank[ClusterRep2.pos.x][ClusterRep2.pos.y] += 1
+
         
