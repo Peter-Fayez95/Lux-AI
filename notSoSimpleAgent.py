@@ -1,22 +1,27 @@
-import math, sys
+# Python Modules imports
+import math, sys, time
+import logging
+
+# Lux API imports
 from lux.game import Game
 from lux.game_map import Cell, RESOURCE_TYPES
 from lux.constants import Constants
 from lux.game_constants import GAME_CONSTANTS
 from lux import annotate
 
+# My imports
+from Cluster import clusterController
+
+
 DIRECTIONS = Constants.DIRECTIONS
 game_state = None
 
-import logging
 logging.basicConfig(filename="MainGame.log", level=logging.INFO)
 
 
 
 def agent(observation, configuration):
     global game_state
-    logging.info("Starting AGENT")
-
 
     ### Do not edit ###
     if observation["step"] == 0:
@@ -33,6 +38,7 @@ def agent(observation, configuration):
     player = game_state.players[observation.player]
     opponent = game_state.players[(observation.player + 1) % 2]
     width, height = game_state.map.width, game_state.map.height
+
     resource_tiles: list[Cell] = []
     for y in range(height):
         for x in range(width):
@@ -71,7 +77,21 @@ def agent(observation, configuration):
                         move_dir = unit.pos.direction_to(closest_city_tile.pos)
                         actions.append(unit.move(move_dir))
 
+
     # you can add debug annotations using the functions in the annotate object
     # actions.append(annotate.circle(0, 0))
     
+    controller = clusterController(width, height)
+    controller.getClustersRolling(width, height, game_state)
+    
+    for clusterid, cluster in controller.clusterDict.items():
+        logging.info(f"Cluster #{clusterid} Properties:")
+        logging.info(f"Cluster Resource Cells: {cluster.resource_cells}")
+        logging.info(f"Cluster Perimeter: {cluster.get_perimeter(game_state)}")
+        logging.info(f"Cluster Fuel: {cluster.get_total_fuel()}")
+        logging.info(f"Cluster Centroid: {cluster.get_centroid()}")
+        logging.info(f"{'-' * 30}")
+
+    time.sleep(10)
+
     return actions

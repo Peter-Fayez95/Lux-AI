@@ -6,6 +6,7 @@
 
 
 import logging
+import math
 from copy import deepcopy
 
 
@@ -41,22 +42,25 @@ def cells_comparator_as_pair(cell1: Cell, cell2: Cell):
         return 1
     
 def get_cell_neighbours_four(cell: Cell, gamestate):
+    '''
+    Get Cells Four Neighbours
+    '''
     neighbours = []
-    # logging.info(f"Cell before Translation is {cell}")
-    # logging.info(f"Cell before Translation is {cell}")
     for dir in DIRECTIONS:
         pos = deepcopy(cell.pos)
         pos = pos.translate(dir, 1)
 
         if inside_map(pos, gamestate.map.width, gamestate.map.height):
             translated_cell = gamestate.map.get_cell(pos.x, pos.y)
-            # logging.info(f"Translated Cell in {dir} is {pos.translate(dir, 1)}")
 
             neighbours.append(translated_cell)
     return neighbours
 
 
 def get_cell_neighbours_eight(cell: Cell, gamestate):
+    '''
+    Get Cells Eight Neighbours
+    '''
     neighbours = get_cell_neighbours_four(cell, gamestate)
 
     dir1 = 0
@@ -77,3 +81,21 @@ def get_cell_neighbours_eight(cell: Cell, gamestate):
             neighbours.append(translated_cell)
     
     return neighbours
+
+
+def get_nearest_position(C, cells):
+    '''
+    Given a cell `C` 
+    Return the smallest distance and cell to it from a list of cells 
+    '''
+    nearest_position = None
+    smallest_distance = math.inf
+
+    for cell in cells:
+        current_distance = C.pos.distance_to(cell.pos)
+        
+        if current_distance < smallest_distance:
+            smallest_distance = current_distance
+            nearest_position = cell
+
+    return nearest_position, smallest_distance
