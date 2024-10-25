@@ -4,7 +4,8 @@ import logging
 from lux.game_map import Cell, Position
 from lux.constants import Constants
 from lux.game_constants import GAME_CONSTANTS
-from helper_functions import cells_comparator_as_pair, get_cell_neighbours_four
+from helper_functions import cells_comparator_as_pair, get_cell_neighbours_four, \
+                            inside_map
 
 
 class Cluster:
@@ -28,7 +29,7 @@ class Cluster:
         '''
         distinct_cells = set()
         for cell in self.cells:
-            logging.info(f"CELL: [{cell.pos.x, cell.pos.y}]")
+            # logging.info(f"CELL: [{cell.pos.x, cell.pos.y}]")
             for neighbour in get_cell_neighbours_four(cell, gamestate):
                 
                 if not neighbour.has_resource():

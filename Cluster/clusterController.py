@@ -1,8 +1,15 @@
-from Cluster.Cluster import Cluster
-from lux.game_map import Cell
 import logging
 
+from Cluster.Cluster import Cluster
+from lux.game_map import Cell
+
+from helper_functions import inside_map, get_cell_neighbours_eight
+
+
 logging.basicConfig(filename="ClusterController.log", level=logging.INFO)
+
+
+
 
 class ClusterController:
     '''
@@ -25,35 +32,18 @@ class ClusterController:
         visited_cell = [[False for _ in range(height)] for _ in range(width)]
 
 
-        # TODO: Need to refactor this function using helper_functions    
-        def dfs(x, y, cluster_cells):
+        def dfs(x, y, cluster_cells, gamestate):
             visited_cell[x][y] = True
+            cluster_cells.append(Cell(x, y))
 
-            # Add this to current Cluster
-            cluster_cells.append(Cell(x, y))  
+            for cell in get_cell_neighbours_eight(Cell(x, y), gamestate):
+                if not visited_cell[cell.pos.x][cell.pos.y]:
+                    neighbour_cell = game_state.map.get_cell(cell.pos.x, cell.pos.y)
 
-            # Loop over all neighbour cells
-            for dx in range(-1, 2):
-                for dy in range(-1, 2):
+                    if neighbour_cell.has_resource():
+                        dfs(neighbour_cell.pos.x, neighbour_cell.pos.y, cluster_cells, gamestate)
 
-                    # Skip the current cell
-                    if (dx == 0 and dy == 0):
-                        continue  
-                    
-                    nx, ny = x + dx, y + dy
-                    if self.inside_map(nx, ny, width, height) and not visited_cell[nx][ny]:
-
-
-                        '''
-                        There may be some errors when evaluating game_state.map.get_cell
-                        This is because in the lux API, get_cell returns map[y][x] not map[x][y]
-                        This is still not tested on the actual API (unittests don't reflect lux API)
-                        '''
-                        neighbor_cell = game_state.map.get_cell(nx, ny)
-
-                        # Only consider cells with resources
-                        if neighbor_cell.has_resource():
-                            dfs(nx, ny, cluster_cells)
+        
 
         for x in range(width):
             for y in range(height):
@@ -65,7 +55,7 @@ class ClusterController:
                     logging.info(f"This cell has resources: {cell}")
                     
                     # Start DFS for this cluster
-                    dfs(x, y, cluster_cells)
+                    dfs(x, y, cluster_cells, game_state)
                     
                     # Union all cells found in this cluster
                     for i in range(1, len(cluster_cells)):
@@ -76,11 +66,6 @@ class ClusterController:
 
 
 
-    def inside_map(self, x, y, width, height):
-        '''
-        Check if the cell(x ,y) is inside the map
-        '''
-        return (0 <= x < width) and (0 <= y < height)
 
     
     # find unique Cluster by its representative cell
