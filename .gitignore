@@ -12,6 +12,7 @@ errorlogs
 
 # Lux-AI replays
 replays
+replay.json
 
 # My (Local) TODO List
 TODO.txt
