@@ -1,5 +1,17 @@
+# Log Files
 *.log
+
+# Python Cache Files
 **/__pycache__/
+
+# pytest module Cache Files
 .pytest_cache
+
+# Lux-AI errorlogs
 errorlogs
+
+# Lux-AI replays
 replays
+
+# My (Local) TODO List
+TODO.txt

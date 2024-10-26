@@ -49,7 +49,7 @@ class GameMap:
     def get_cell(self, x, y) -> Cell:
         return self.map[y][x]
     
-    def get_cell(self, pos):
+    def get_cell_by_position(self, pos):
         return self.map[pos.x][pos.y]
 
     def _setResource(self, r_type, x, y, amount):

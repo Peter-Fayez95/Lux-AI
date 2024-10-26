@@ -22,8 +22,9 @@ class ClusterController:
     TODO: Add Cluster Updates
     '''
 
-    def __init__(self, width, height):
-        self.parent = [[Cell(x, y) for y in range(height)] for x in range(width)]
+    def __init__(self, width, height, gamestate):
+        self.parent = [ [ gamestate.map.get_cell(x, y) for y in range(height) ] 
+                                for x in range(width)]
         self.rank = [[0 for _ in range(height)] for _ in range(width)]
         self.clusterDict = dict()
         logging.info("ClusterController Started")
@@ -36,7 +37,8 @@ class ClusterController:
 
         def dfs(x, y, cluster_cells, gamestate):
             visited_cell[x][y] = True
-            cluster_cells.append(Cell(x, y))
+            real_cell = game_state.map.get_cell(x, y)
+            cluster_cells.append(real_cell)
 
             for cell in get_cell_neighbours_eight(Cell(x, y), gamestate):
                 if not visited_cell[cell.pos.x][cell.pos.y]:

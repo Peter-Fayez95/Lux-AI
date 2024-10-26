@@ -49,10 +49,11 @@ class Cluster:
         '''
         Get total cluster fuel
         '''
+        
         FUEL_CONVERSION_RATE = GAME_CONSTANTS['PARAMETERS']['RESOURCE_TO_FUEL_RATE']
-
+        
         def get_cell_fuel(cell: Cell):
-            if cell.resource is None:
+            if not cell.has_resource():
                 return 0
             if cell.resource.type == Constants.RESOURCE_TYPES.WOOD:
                 return cell.resource.amount * FUEL_CONVERSION_RATE['WOOD']
