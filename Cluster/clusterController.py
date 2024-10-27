@@ -3,7 +3,7 @@ import logging
 from Cluster.Cluster import Cluster
 from lux.game_map import Cell
 
-from helper_functions import inside_map, get_cell_neighbours_eight
+from helperFuncions.helper_functions import inside_map, get_cell_neighbours_eight
 
 
 logging.basicConfig(filename="ClusterController.log", level=logging.INFO)

@@ -2,7 +2,7 @@
 import pytest
 from lux.game_map import Position, Resource
 from Cluster.clusterController import ClusterController
-from helper_functions import get_cell_neighbours_four, get_cell_neighbours_eight
+from helperFuncions.helper_functions import get_cell_neighbours_four, get_cell_neighbours_eight
 import logging
 
 logging.basicConfig(filename="ClusterController.log", level=logging.INFO)

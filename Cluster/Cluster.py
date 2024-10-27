@@ -5,7 +5,7 @@ import math
 from lux.game_map import Cell, Position
 from lux.constants import Constants
 from lux.game_constants import GAME_CONSTANTS
-from helper_functions import cells_comparator_as_pair, get_cell_neighbours_four, \
+from helperFuncions.helper_functions import cells_comparator_as_pair, get_cell_neighbours_four, \
                             inside_map, get_nearest_position
 
 from Weights.Cluster import cluster_weights
@@ -150,4 +150,3 @@ class Cluster:
 
         return cluster_score
         
-
