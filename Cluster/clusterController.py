@@ -15,20 +15,28 @@ class ClusterController:
     '''
     This Class is a DSU Data Structure for Clusters
 
-    parent:         List(List(Cell))        Cluster Representative of each Cell Cluster
-    rank:           List(List(int))         Cell Rank (for finding Cluster Rep.)
+    parent:         List(List(int))         Cluster Representative of each Cell Cluster
+    rank:           List(int)               Cell Rank (for finding Cluster Rep.)
     clustersDict:   Dict[int -> Cluster]    Mapping of Each Cluster Representative to Cluster
 
     TODO: Add Cluster Updates
     '''
 
     def __init__(self, width, height, gamestate):
-        self.parent = [ [ gamestate.map.get_cell(x, y) for y in range(height) ] 
-                                for x in range(width)]
-        self.rank = [[0 for _ in range(height)] for _ in range(width)]
+        self.width = width
+        self.height = height
+        
+        self.parent = []
+        for x in range(width):
+            for y in range(height):
+                 self.parent.append(self.get_cell_value(x, y))
+        
+        self.rank = [0 for i in range(width * height)]
         self.clusterDict = dict()
         logging.info("ClusterController Started")
 
+    def get_cell_value(self, x: int, y: int):
+            return x * self.width + y
 
     # This method is only called once (at the game start)
     def getClustersRolling(self, width, height, game_state):
@@ -65,22 +73,26 @@ class ClusterController:
                     for i in range(1, len(cluster_cells)):
                         self.unionClusters(cluster_cells[0], cluster_cells[i])
 
-                    current_cluster = Cluster(self.rank[x][y], cluster_cells)
-                    self.clusterDict[self.rank[x][y]] = current_cluster
+                    current_cluster = Cluster(self.rank[self.get_cell_value(x, y)], cluster_cells)
+                    self.clusterDict[self.get_cell_value(x, y)] = current_cluster
 
 
 
 
     
     # find unique Cluster by its representative cell
-    def findCluster(self, cell: Cell):
-        # logging.info("cell from findCluster:", cell)
-        if self.parent[cell.pos.x][cell.pos.y] == cell:
-            return cell
+    def findCluster(self, cell) -> int:
+        cell_value = self.get_cell_value(cell.pos.x, cell.pos.y)
         
-        else:
-            self.parent[cell.pos.x][cell.pos.y] = self.findCluster(self.parent[cell.pos.x][cell.pos.y])
-            return self.parent[cell.pos.x][cell.pos.y]
+        if self.parent[cell_value] != cell_value:
+            # Convert the parent index back to x, y coordinates to call findCluster recursively
+            parent_x = self.parent[cell_value] // self.width
+            parent_y = self.parent[cell_value] % self.width
+            # Recursively call findCluster and apply path compression
+            self.parent[cell_value] = self.findCluster(Cell(parent_x, parent_y))
+        
+        return self.parent[cell_value]
+
         
     # Check if two cells belong to the same cluster
     def isSameCluster(self, cell1: Cell, cell2: Cell):
@@ -94,15 +106,15 @@ class ClusterController:
             return
         
         # Find the Cluster Representative of each cell
-        ClusterRep1 = self.findCluster(cell1) 
+        ClusterRep1 = self.findCluster(cell1)
         ClusterRep2 = self.findCluster(cell2)
 
-        if [ClusterRep1.pos.x, ClusterRep1.pos.y] > [ClusterRep2.pos.x, ClusterRep2.pos.y]:
+        if self.rank[ClusterRep1] > self.rank[ClusterRep2]:
             ClusterRep1, ClusterRep2 = ClusterRep2, ClusterRep1
 
-        self.parent[ClusterRep1.pos.x][ClusterRep1.pos.y] = self.parent[ClusterRep2.pos.x][ClusterRep2.pos.y]
+        self.parent[ClusterRep1] = self.parent[ClusterRep2]
 
-        if self.rank[ClusterRep1.pos.x][ClusterRep1.pos.y] == self.rank[ClusterRep2.pos.x][ClusterRep2.pos.y]:
-            self.rank[ClusterRep2.pos.x][ClusterRep2.pos.y] += 1
+        if self.rank[ClusterRep1] == self.rank[ClusterRep2]:
+            self.rank[ClusterRep2] += 1
 
         
