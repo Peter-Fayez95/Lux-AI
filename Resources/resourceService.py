@@ -2,7 +2,6 @@ from typing import List
 from lux.game_map import Cell, Position, RESOURCE_TYPES
 
 
-
 def get_resources(game_state):
     '''
     Get all resource cells in the game map.
@@ -34,3 +33,16 @@ def get_minable_resource_cells(
         if resource_cell.resource.type in minable_resource_types
     ]
     return minable_resource_cells
+
+def get_resources_from_cells(gamestate, cells):
+    '''
+    Given the Cells list `cells`
+    return the resource cells from this list
+    '''
+    resource_cells = []
+
+    for cell in cells:
+        if cell.has_resource():
+            resource_cells.append(cell)
+    
+    return resource_cells

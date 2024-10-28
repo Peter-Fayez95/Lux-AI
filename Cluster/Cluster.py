@@ -8,6 +8,8 @@ from lux.game_constants import GAME_CONSTANTS
 from helperFuncions.helper_functions import cells_comparator_as_pair, get_cell_neighbours_four, \
                             inside_map, get_nearest_position
 
+from Resources.resourceService import get_resources_from_cells
+
 from Weights.Cluster import cluster_weights
 
 class Cluster:
@@ -40,7 +42,7 @@ class Cluster:
                     distinct_cells.add((neighbour.pos.x, neighbour.pos.y))
 
         
-        distinct_cells = sorted(list(distinct_cells))
+        # distinct_cells = sorted(list(distinct_cells))
         return distinct_cells
     
 
@@ -150,3 +152,22 @@ class Cluster:
 
         return cluster_score
         
+
+
+    def update_cluster(self, game_state, player):
+
+        # Update Cluster Resource Cells
+        new_resource_cells = get_resources_from_cells(game_state, self.cells)
+        self.cells = new_resource_cells
+
+        # Update Cluster Units
+        player_all_units = set(unit.id for unit in player.units)
+
+        cluster_units = set(unit_id for unit_id in self.units if unit_id in player_all_units)
+
+        self.units = cluster_units
+
+        # Update Perimeter
+        
+        # Update Perimeter Cells without CityTiles
+
