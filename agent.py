@@ -87,6 +87,7 @@ def agent(observation, configuration):
     logging.info(f"Number of Clusters: {len(controller.clusterDict)}")
     for clusterid, cluster in controller.clusterDict.items():
         logging.info(f"Cluster #{clusterid} Properties:")
+        logging.info(f"Cluster Resource Type: {cluster.resource_type}")
         logging.info(f"Cluster Resource Cells: {[cell.pos.__str__() for cell in cluster.resource_cells]}")
         logging.info(f"Cluster Perimeter: {cluster.get_perimeter(game_state)}")
         logging.info(f"Cluster Fuel: {cluster.get_total_fuel()}")

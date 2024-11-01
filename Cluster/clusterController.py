@@ -3,12 +3,10 @@ import logging
 from Cluster.Cluster import Cluster
 from lux.game_map import Cell
 
-from helperFuncions.helper_functions import inside_map, get_cell_neighbours_eight
-
+from helperFuncions.helper_functions import (inside_map,
+    get_cell_neighbours_eight, same_resource)
 
 logging.basicConfig(filename="ClusterController.log", level=logging.INFO)
-
-
 
 
 class ClusterController:
@@ -52,7 +50,7 @@ class ClusterController:
                 if not visited_cell[cell.pos.x][cell.pos.y]:
                     neighbour_cell = game_state.map.get_cell(cell.pos.x, cell.pos.y)
 
-                    if neighbour_cell.has_resource():
+                    if neighbour_cell.has_resource() and same_resource(real_cell, neighbour_cell):
                         dfs(neighbour_cell.pos.x, neighbour_cell.pos.y, cluster_cells, gamestate)
 
         
@@ -73,10 +71,8 @@ class ClusterController:
                     for i in range(1, len(cluster_cells)):
                         self.unionClusters(cluster_cells[0], cluster_cells[i])
 
-                    current_cluster = Cluster(self.rank[self.get_cell_value(x, y)], cluster_cells)
+                    current_cluster = Cluster(cell.resource.type, self.rank[self.get_cell_value(x, y)], cluster_cells)
                     self.clusterDict[self.get_cell_value(x, y)] = current_cluster
-
-
 
 
     
@@ -116,5 +112,3 @@ class ClusterController:
 
         if self.rank[ClusterRep1] == self.rank[ClusterRep2]:
             self.rank[ClusterRep2] += 1
-
-        

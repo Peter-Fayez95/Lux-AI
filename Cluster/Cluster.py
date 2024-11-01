@@ -22,7 +22,8 @@ class Cluster:
     units           List(Str)       List of this cluster's units (workers / carts)
     '''
 
-    def __init__(self, cluster_id, cells):
+    def __init__(self, resource_type, cluster_id, cells):
+        self.resource_type = resource_type
         self.clusterID = cluster_id
         self.resource_cells = cells
         self.units = []

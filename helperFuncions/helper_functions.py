@@ -28,6 +28,9 @@ def inside_map(x, y, width, height):
 def inside_map(pos: Position, width, height):
     return (0 <= pos.x < width) and (0 <= pos.y < height)
 
+def same_resource(cell1 : Cell, cell2 : Cell) -> bool:
+    return cell1.resource.type == cell2.resource.type
+
 
 def cells_comparator_as_pair(cell1: Cell, cell2: Cell):
     '''
