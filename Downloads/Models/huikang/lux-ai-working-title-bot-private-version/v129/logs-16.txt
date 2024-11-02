@@ -1,0 +1,216 @@
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000001
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000002
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000003
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000004
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000005
+}
+{
+  ranks: [
+    { rank: 1, agentID: 1, name: './ref/main.py' },
+    { rank: 2, agentID: 0, name: './main.py' }
+  ],
+  replayFile: null,
+  seed: 30000006
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000007
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000008
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000009
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000010
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000011
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000012
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000013
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000014
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000015
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000016
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000017
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000018
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000019
+}
+{
+  ranks: [
+    { rank: 1, agentID: 1, name: './ref/main.py' },
+    { rank: 2, agentID: 0, name: './main.py' }
+  ],
+  replayFile: null,
+  seed: 30000020
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000021
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000022
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000023
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000024
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000025
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000026
+}
+{
+  ranks: [
+    { rank: 1, agentID: 0, name: './main.py' },
+    { rank: 2, agentID: 1, name: './ref/main.py' }
+  ],
+  replayFile: null,
+  seed: 30000027
+}
