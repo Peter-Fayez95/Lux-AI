@@ -27,7 +27,8 @@ class Cluster:
         self.clusterID = cluster_id
         self.resource_cells = cells
         self.units = []
-
+        self.perimeter = []
+        self.exposed_perimeter = []
     
     def get_perimeter(self, gamestate) -> list[Cell]:
         '''
@@ -155,11 +156,17 @@ class Cluster:
         
 
 
-    def update_cluster(self, game_state, player):
+    def update(self, game_state, player):
+        '''
+        Update this cluster
+        1- Update Resource Cells (Some cells get consumed)
+        2- Update Cluster Units (Some units die)
+        3- Update Perimeter and Exposed Perimeter
+        '''
 
         # Update Cluster Resource Cells
-        new_resource_cells = get_resources_from_cells(game_state, self.cells)
-        self.cells = new_resource_cells
+        new_resource_cells = get_resources_from_cells(game_state, self.resource_cells)
+        self.resource_cells = new_resource_cells
 
         # Update Cluster Units
         player_all_units = set(unit.id for unit in player.units)
@@ -169,6 +176,11 @@ class Cluster:
         self.units = cluster_units
 
         # Update Perimeter
-        
-        # Update Perimeter Cells without CityTiles
+        self.perimeter = self.get_perimeter(game_state)
 
+        # Update Perimeter Cells without CityTiles
+        self.exposed_perimeter = [
+            (x, y) for (x, y) in self.perimeter
+            if game_state.map.get_cell(x, y).citytile is not None and
+                not game_state.map.get_cell(x, y).has_resource()
+        ]

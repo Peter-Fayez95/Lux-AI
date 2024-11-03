@@ -1,6 +1,8 @@
 import logging
+import math
 
 from Cluster.Cluster import Cluster
+from agent import game_state
 from lux.game_map import Cell
 
 from helperFuncions.helper_functions import (inside_map,
@@ -31,6 +33,9 @@ class ClusterController:
         
         self.rank = [0 for i in range(width * height)]
         self.clusterDict = dict()
+        self.woodClusters = []
+        self.coalClusters = []
+        self.uraniumClusters = []
         logging.info("ClusterController Started")
 
     def get_cell_value(self, x: int, y: int):
@@ -72,6 +77,13 @@ class ClusterController:
                         self.unionClusters(cluster_cells[0], cluster_cells[i])
 
                     current_cluster = Cluster(cell.resource.type, self.rank[self.get_cell_value(x, y)], cluster_cells)
+                    if cell.resource.resource_type == "wood":
+                        self.woodClusters.append(current_cluster)
+                    elif cell.resource.resource_type == "coal":
+                        self.coalClusters.append(current_cluster)
+                    else:
+                        self.uraniumClusters.append(current_cluster)
+
                     self.clusterDict[self.get_cell_value(x, y)] = current_cluster
 
 
@@ -112,3 +124,22 @@ class ClusterController:
 
         if self.rank[ClusterRep1] == self.rank[ClusterRep2]:
             self.rank[ClusterRep2] += 1
+
+    def update_clusters(self, game_state):
+        for Clusterid, cluster in self.clusterDict.items():
+            cluster.update(game_state)
+
+
+    def assign_worker(self, worker, game_state, player_id):
+        # Scores[Int -> Score]
+        # For Each cluster represented by id, get its score for this worker
+        maximum_score = -math.inf
+        assigned_cluster = None
+        for id, cluster in self.clusterDict.items():
+            current_cluster_score = cluster.get_cluster_score_for_worker(worker, game_state, player_id)
+
+            if current_cluster_score > maximum_score:
+                maximum_score = current_cluster_score
+                assigned_cluster = id
+
+        return assigned_cluster
