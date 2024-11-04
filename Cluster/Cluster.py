@@ -11,15 +11,21 @@ from helperFuncions.helper_functions import cells_comparator_as_pair, get_cell_n
 from Resources.resourceService import get_resources_from_cells
 
 from Weights.Cluster import cluster_weights
+from Missions import Mission, MissionController
+from Missions.constants import BUILD_TILE, GUARD_CLUSTER
+
 
 class Cluster:
     '''
     The cluster is basically a connected component of resources
     Each cluster consists of only one type of resources (Wood / Coal / Uranium)
 
-    clusterID       int             Representative Cell DSU Rank
-    cells           List(Cells)     List of this cluster's cells
-    units           List(Str)       List of this cluster's units (workers / carts)
+    clusterID           int             Representative Cell DSU Rank
+    cells               List(Cells)     List of this cluster's cells
+    units               List(Str)       List of this cluster's units (workers / carts)
+    perimeter           List(Cells)     List of this cluster's perimeter cells
+    exposed_perimeter   List(Cells)     List of this cluster's perimeter cells without citytiles
+    missions            List(Mission)   List of this cluster's missions
     '''
 
     def __init__(self, resource_type, cluster_id, cells):
@@ -29,6 +35,7 @@ class Cluster:
         self.units = []
         self.perimeter = []
         self.exposed_perimeter = []
+        self.missions = []
     
     def get_perimeter(self, gamestate) -> list[Cell]:
         '''
@@ -104,7 +111,14 @@ class Cluster:
         # for unit in self.units: # Str
         #     if unit in player_workers:
                 
-    
+    def remove_unit(self, unit_id):
+        '''
+        Remove a unit from the cluster
+        '''
+        try:
+            self.units.remove(unit_id)
+        except ValueError:
+            pass
 
 
     def get_cluster_score_for_worker(self, worker, gamestate, player_id):
@@ -184,3 +198,87 @@ class Cluster:
             if game_state.map.get_cell(x, y).citytile is not None and
                 not game_state.map.get_cell(x, y).has_resource()
         ]
+
+    def remove_finished_missions(self, game_state):
+        '''
+        Remove all finished missions from this cluster
+        
+        1- Remove all finished BUILD_TILE missions
+        2- Remove all finished GUARD_CLUSTER missions
+
+        '''
+        MissionController.remove_finished_tile_missions(self.missions, game_state)
+        MissionController.remove_finished_guard_missions(self.missions, game_state)
+
+    def remove_missions_with_no_units(self):
+        '''
+        Remove all missions with no responsible units
+        '''
+        MissionController.remove_missions_with_no_units(self.missions, self.units)
+
+
+    def update_missions(self, game_state):
+        '''
+        Update the missions for this cluster
+
+        1- Remove all finished missions
+        2- Remove all missions with no responsible units
+        3- Issue new missions:
+            - If the cluster has no units, issue a BUILD_TILE mission (First Priority)
+            - If the cluster has units, issue a GUARD_CLUSTER mission (Second Priority)
+        '''
+        self.remove_finished_missions(game_state)
+        self.remove_missions_with_no_units()
+
+        units_without_missions = [
+            unit_id for unit_id in self.units if unit_id not in 
+                [mission.responsible_unit.id for mission in self.missions]
+        ]
+
+        cells_without_tiles = self.exposed_perimeter
+        build_mission_count = 0
+
+        for unit_id in units_without_missions:
+            if build_mission_count == len(cells_without_tiles):
+                break
+
+            self.missions[unit_id] = Mission(
+                unit_id,
+                BUILD_TILE,
+                cells_without_tiles[build_mission_count]
+            )
+
+            build_mission_count += 1
+
+        units_without_missions = [
+            unit_id for unit_id in self.units if unit_id not in 
+                [mission.responsible_unit.id for mission in self.missions]
+        ]
+
+        guard_mission_count = 0
+        for unit_id in units_without_missions:
+            if guard_mission_count == len(self.resource_cells):
+                break
+
+            self.missions.append(Mission(
+                unit_id,
+                GUARD_CLUSTER,
+                self.resource_cells[guard_mission_count].pos  
+            ))
+            guard_mission_count += 1
+
+        # If we have more workers than required, we release them.
+        released_units = [
+            unit_id for unit_id in self.units if unit_id not in 
+                [mission.responsible_unit.id for mission in self.missions]
+        ]
+
+        for unit_id in released_units:
+            self.remove_unit(unit_id)
+
+        # If cluster resources are depleted, no use for its units.
+        if len(self.resource_cells) == 0:
+            self.units = []
+            self.missions = []
+
+    

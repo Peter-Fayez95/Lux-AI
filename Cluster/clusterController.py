@@ -19,7 +19,6 @@ class ClusterController:
     rank:           List(int)               Cell Rank (for finding Cluster Rep.)
     clustersDict:   Dict[int -> Cluster]    Mapping of Each Cluster Representative to Cluster
 
-    TODO: Add Cluster Updates
     '''
 
     def __init__(self, width, height, gamestate):
