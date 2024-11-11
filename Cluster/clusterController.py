@@ -1,6 +1,7 @@
 import logging
 import math
 
+from typing import List, Dict, Tuple, Str
 from Cluster.Cluster import Cluster
 from agent import game_state
 from lux.game_map import Cell
@@ -128,6 +129,10 @@ class ClusterController:
         for Clusterid, cluster in self.clusterDict.items():
             cluster.update(game_state)
 
+    def update_missions(self, game_state):
+        for Clusterid, cluster in self.clusterDict.items():
+            cluster.update_missions(game_state)
+
 
     def assign_worker(self, worker, game_state, player_id):
         # Scores[Int -> Score]
@@ -142,3 +147,15 @@ class ClusterController:
                 assigned_cluster = id
 
         return assigned_cluster
+    
+    def get_units_without_clusters(self, player) -> List[Str]:
+        units_with_clusters = []
+        for id, cluster in self.clusterDict.items():
+            units_with_clusters.extend(cluster.units)
+
+        units_without_clusters = []
+        for unit in player.units:
+            if unit.id not in units_with_clusters:
+                units_without_clusters.append(unit)
+
+        return units_without_clusters

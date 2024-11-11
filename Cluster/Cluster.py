@@ -110,6 +110,12 @@ class Cluster:
 
         # for unit in self.units: # Str
         #     if unit in player_workers:
+
+    def add_unit(self, unit_id):
+        '''
+        Add a unit to the cluster
+        '''
+        self.units.append(unit_id)
                 
     def remove_unit(self, unit_id):
         '''
