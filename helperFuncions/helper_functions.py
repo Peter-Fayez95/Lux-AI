@@ -8,10 +8,11 @@
 import logging
 import math
 from copy import deepcopy
-
+from functools import cmp_to_key
 
 from lux.game_map import Cell, Position, Resource
 from lux.constants import Constants
+from lux.game_objects import Unit
 
 DIRECTIONS = Constants.DIRECTIONS
 DIRECTIONS = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
@@ -102,3 +103,79 @@ def get_nearest_position(C, cells):
             nearest_position = cell
 
     return nearest_position, smallest_distance
+
+def get_unit_by_id(id, player) -> Unit:
+    for unit in player.units:
+        if unit.id == id:
+            return unit
+        
+
+def get_perimeter(cells, game_state):
+    distinct_cells = set()
+    for cell in cells:
+        # logging.info(f"CELL: [{cell.pos.x, cell.pos.y}]")
+        for neighbour in get_cell_neighbours_four(cell, game_state):
+            
+            if not neighbour.has_resource():
+                distinct_cells.add((neighbour.pos.x, neighbour.pos.y))
+
+    
+    # distinct_cells = sorted(list(distinct_cells))
+    return distinct_cells
+        
+
+
+def get_build_position_score(game_state, opponent, pos, center):
+    travel_distance = center.distance_to(pos)
+    travel_distance_score = 100 / ((travel_distance ** 2) + 1)
+
+    opponent_distances = []
+    for unit in opponent.units:
+        distance = pos.distance_to(unit.pos)
+        opponent_distances.append(distance)
+
+    opponent_distance_score = (10 * len(opponent.units)) \
+        / (sum(opponent_distances) + 1)
+
+    perimeter = get_perimeter(
+        [game_state.map.get_cell_by_pos(pos)],
+        game_state
+    )
+
+    perimeter_score = 0
+    for p in perimeter:
+        cell = game_state.map.get_cell_by_pos(p)
+        if cell.citytile is not None:
+            perimeter_score += 2
+
+    final_score = perimeter_score + opponent_distance_score \
+        + travel_distance_score
+
+    return final_score
+
+
+def get_important_positions(game_state, opponent, available_targets, units):
+
+    sum_x = sum([unit.pos.x for unit in units])
+    sum_y = sum([unit.pos.y for unit in units])
+
+    mean_x = sum_x / len(units)
+    mean_y = sum_y / len(units)
+
+    center = Position(mean_x, mean_y)
+
+    def compare(pos1, pos2):
+        return pos2[0] - pos1[0]
+
+    pos_score_vector = []
+
+
+    for pos in available_targets:
+        score = get_build_position_score(game_state, opponent, pos, center)
+
+        pos_score_vector.append([score, pos])
+
+    pos_score_vector.sort(key=cmp_to_key(compare))
+
+    return [pos_score[1] for pos_score in pos_score_vector][:len(units)]
+

@@ -12,6 +12,8 @@ from lux import annotate
 # My imports
 from Cluster.clusterController import ClusterController
 from Resources.resourceService import get_resources, get_minable_resource_cells
+from Missions.Mission import Mission
+from Missions.Mission import BUILD_TILE, GUARD_CLUSTER
 
 
 DIRECTIONS = Constants.DIRECTIONS
@@ -66,7 +68,16 @@ def agent(observation, configuration):
 
         if assigned_cluster is not None:
             assigned_cluster.add_unit(unit)
-            
+            current_mission = Mission(responsible_unit=unit)
+            assigned_cluster.missions.append(current_mission)
+
+
+    # Now, all units have missions assigned to them
+    for id, cluster in cluster_controller.clusterDict.items():
+        
+
+        cluster.assign_targets_to_missions(game_state, player, opponent, BUILD_TILE)
+        cluster.assign_targets_to_missions(game_state, player, opponent, GUARD_CLUSTER)
 
     # resource_tiles: list[Cell] = []
     # for y in range(height):

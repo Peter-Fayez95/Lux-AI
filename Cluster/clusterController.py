@@ -19,7 +19,6 @@ class ClusterController:
     parent:         List(List(int))         Cluster Representative of each Cell Cluster
     rank:           List(int)               Cell Rank (for finding Cluster Rep.)
     clustersDict:   Dict[int -> Cluster]    Mapping of Each Cluster Representative to Cluster
-
     '''
 
     def __init__(self, width, height, gamestate):

@@ -6,7 +6,7 @@ from lux.game_map import Cell, Position
 from lux.constants import Constants
 from lux.game_constants import GAME_CONSTANTS
 from helperFuncions.helper_functions import cells_comparator_as_pair, get_cell_neighbours_four, \
-                            inside_map, get_nearest_position
+                            inside_map, get_nearest_position, get_unit_by_id, get_important_positions
 
 from Resources.resourceService import get_resources_from_cells
 
@@ -176,7 +176,7 @@ class Cluster:
         
 
 
-    def update(self, game_state, player):
+    def update_cluster(self, game_state, player):
         '''
         Update this cluster
         1- Update Resource Cells (Some cells get consumed)
@@ -287,4 +287,41 @@ class Cluster:
             self.units = []
             self.missions = []
 
-    
+
+    def assign_targets_to_missions(self, game_state, player, opponent, mission_type):
+        
+        units = []
+
+        for mission in self.missions:
+            if mission.mission_type == mission_type:
+                units.append(get_unit_by_id(mission.responsible_unit.id, player))
+
+        if len(units) == 0:
+            return
+        
+        target_positions = []
+
+        if mission_type == BUILD_TILE:
+            target_positions.extend(get_important_positions(game_state, opponent, 
+            self.exposed_perimeter, units))
+
+        
+        if mission_type == GUARD_CLUSTER:
+            target_positions.extend(get_important_positions(
+                game_state, 
+                opponent, 
+                [cell.pos for cell in self.resource_cells], 
+                units))
+        
+        if len(target_positions) == 0:
+            return
+        
+        mission_controller = MissionController()
+
+        missions = mission_controller.negotiate_missions(
+            self.missions,
+            units,
+            target_positions
+        )
+
+        self.missions = missions
