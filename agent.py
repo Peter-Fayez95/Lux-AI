@@ -14,6 +14,7 @@ from Cluster.clusterController import ClusterController
 from Resources.resourceService import get_resources, get_minable_resource_cells
 from Missions.Mission import Mission
 from Missions.Mission import BUILD_TILE, GUARD_CLUSTER
+from helperFuncions.helper_functions import get_unit_by_id
 
 
 DIRECTIONS = Constants.DIRECTIONS
@@ -78,6 +79,51 @@ def agent(observation, configuration):
 
         cluster.assign_targets_to_missions(game_state, player, opponent, BUILD_TILE)
         cluster.assign_targets_to_missions(game_state, player, opponent, GUARD_CLUSTER)
+
+    occupied_positions = set()
+    opponent_citytiles = set()
+    for city in opponent.cities.values():
+        for city_tile in city.citytiles:
+            opponent_citytiles.add((city_tile.pos.x, city_tile.pos.y))
+
+    occupied_positions = occupied_positions.union(opponent_citytiles)
+
+    disabled_units_positions = set()
+    for unit in player.units:
+        if not unit.can_act():
+            disabled_units_positions.add((unit.pos.x, unit.pos.y))
+    occupied_positions = occupied_positions.union(disabled_units_positions)
+
+    units_without_target_positions = set()
+
+    for id, cluster in cluster_controller.clusterDict.items():
+        for mission in cluster.missions:
+            if mission.target_pos is None:
+                unit = get_unit_by_id(mission.unit)
+                units_without_target_positions.add((unit.pos.x, unit.pos.y))
+    occupied_positions = occupied_positions.union(
+        units_without_target_positions
+    )
+
+    units_at_target_positions = set()
+    for id, cluster in cluster_controller.clusterDict.items():
+        for mission in cluster.missions:
+            if mission.target_pos is not None and \
+                    mission.unit is not None and \
+                    mission.target_pos.equals(mission.unit.pos):
+                unit = get_unit_by_id(mission.unit)
+                units_at_target_positions.add((unit.pos.x, unit.pos.y))
+    occupied_positions = occupied_positions.union(units_at_target_positions)
+
+    player_citytiles = set()
+    for city in player.cities.values():
+        for city_tile in city.citytiles:
+            player_citytiles.add((city_tile.pos.x, city_tile.pos.y))
+
+    
+    occupied_positions = occupied_positions.difference(player_citytiles)
+
+    
 
     # resource_tiles: list[Cell] = []
     # for y in range(height):
