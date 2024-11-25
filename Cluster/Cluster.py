@@ -5,7 +5,7 @@ import math
 from lux.game_map import Cell, Position
 from lux.constants import Constants
 from lux.game_constants import GAME_CONSTANTS
-from helperFuncions.helper_functions import cells_comparator_as_pair, get_cell_neighbours_four, \
+from helperFunctions.helper_functions import cells_comparator_as_pair, get_cell_neighbours_four, \
                             inside_map, get_nearest_position, get_unit_by_id, get_important_positions
 
 from Resources.resourceService import get_resources_from_cells

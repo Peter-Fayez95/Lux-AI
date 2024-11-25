@@ -14,7 +14,7 @@ from Cluster.clusterController import ClusterController
 from Resources.resourceService import get_resources, get_minable_resource_cells
 from Missions.Mission import Mission
 from Missions.Mission import BUILD_TILE, GUARD_CLUSTER
-from helperFuncions.helper_functions import get_unit_by_id
+from helperFunctions.helper_functions import get_unit_by_id
 
 
 DIRECTIONS = Constants.DIRECTIONS
@@ -123,7 +123,7 @@ def agent(observation, configuration):
     
     occupied_positions = occupied_positions.difference(player_citytiles)
 
-    
+
 
     # resource_tiles: list[Cell] = []
     # for y in range(height):
