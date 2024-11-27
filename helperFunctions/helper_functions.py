@@ -179,3 +179,85 @@ def get_important_positions(game_state, opponent, available_targets, units):
 
     return [pos_score[1] for pos_score in pos_score_vector][:len(units)]
 
+def get_directions(src, dest):
+    directions = []
+    if dest.y - src.y < 0:
+        directions.append(DIRECTIONS.NORTH)
+    if dest.y - src.y > 0:
+        directions.append(DIRECTIONS.SOUTH)
+    if dest.x - src.x > 0:
+        directions.append(DIRECTIONS.EAST)
+    if dest.x - src.x < 0:
+        directions.append(DIRECTIONS.WEST)
+    return directions
+
+def negotiate_actions(occupied_positions, requested_movements):
+    '''
+    This is just a simple heuristics.
+    We prioritize unit that has only one direction to go.
+    Currently, the unit does not have intelligence to make it way around
+    and obstacle. If there is an obstacle, he/she simple waits till
+    the obstacle is gone. More research is needed.
+    '''
+
+    # TO-DO make it more efficient
+    # SORT UNIT BY PRIORTIY HEURISTICS
+    actions = []
+
+    # unmovable_units or obstacles
+    for requested_movement in requested_movements:
+        for movement in requested_movement['movements']:
+            if (movement['next_pos'].x, movement['next_pos'].y) \
+                    not in occupied_positions:
+                break
+
+            occupied_positions.add(
+                (
+                    requested_movement['unit'].pos.x,
+                    requested_movement['unit'].pos.y
+                )
+            )
+            requested_movement['approved'] = False
+
+    for requested_movement in requested_movements:
+        if len(requested_movement['movements']) == 1:
+            movement = requested_movement['movements'][0]
+            if (movement['next_pos'].x, movement['next_pos'].y) \
+                    not in occupied_positions:
+                actions.append(
+                    requested_movement['unit'].move(movement['direction'])
+                )
+                occupied_positions.add(
+                    (movement['next_pos'].x, movement['next_pos'].y)
+                )
+                requested_movement['approved'] = True
+            else:
+                occupied_positions.add(
+                    (requested_movement['unit'].pos.x,
+                     requested_movement['unit'].pos.y)
+                )
+
+    for requested_movement in requested_movements:
+        if len(requested_movement['movements']) > 1:
+            movements = requested_movement['movements']
+            for movement in movements:
+                if (movement['next_pos'].x, movement['next_pos'].y) \
+                        not in occupied_positions:
+                    actions.append(
+                        requested_movement['unit'].move(movement['direction'])
+                    )
+                    occupied_positions.add(
+                        (movement['next_pos'].x, movement['next_pos'].y)
+                    )
+                    requested_movement['approved'] = True
+                    break
+
+        if not requested_movement['approved']:
+            occupied_positions.add(
+                (
+                    requested_movement['unit'].pos.x,
+                    requested_movement['unit'].pos.y
+                )
+            )
+
+    return actions

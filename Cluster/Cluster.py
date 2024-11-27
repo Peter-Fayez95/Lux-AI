@@ -325,3 +325,33 @@ class Cluster:
         )
 
         self.missions = missions
+
+    def get_build_actions(self, game_stats):
+        actions = []
+
+        for mission in self.missions:
+            if mission.mission_type == BUILD_TILE \
+                and mission.target_pos is not None:
+                    unit = get_unit_by_id(mission.responsible_unit.id)
+                    
+
+                    if unit.pos.equals(mission.target_pos) \
+                     and unit.get_cargo_space_left() == 0 \
+                     and unit.can_act() \
+                     and game_stats['turns_until_night'] > 5:
+                        actions.append(unit.build_city())
+
+        return actions
+    
+    def get_required_moves(self):
+        moves = []
+
+        for mission in self.missions:
+            unit = get_unit_by_id(mission.responsible_unit.id)
+            target_pos = mission.target_pos
+
+            if unit is None or target_pos is None:
+                continue
+
+            if unit.can_act() and not unit.pos.equals(target_pos):
+                moves.append(mission.get_moves())

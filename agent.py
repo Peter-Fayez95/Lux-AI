@@ -14,7 +14,7 @@ from Cluster.clusterController import ClusterController
 from Resources.resourceService import get_resources, get_minable_resource_cells
 from Missions.Mission import Mission
 from Missions.Mission import BUILD_TILE, GUARD_CLUSTER
-from helperFunctions.helper_functions import get_unit_by_id
+from helperFunctions.helper_functions import get_unit_by_id, get_directions, negotiate_actions
 
 
 DIRECTIONS = Constants.DIRECTIONS
@@ -124,6 +124,24 @@ def agent(observation, configuration):
     occupied_positions = occupied_positions.difference(player_citytiles)
 
 
+    # GET ACTIONS
+    # ____________
+
+    required_moves = list()
+    
+    for id, cluster in cluster_controller.clusterDict.items():
+        if len(cluster.missions) == 0:
+            continue
+
+        actions.extend(cluster.get_actions(game_stats))
+        required_moves.extend(cluster.get_required_moves())
+
+    
+    # Add the valid actions (those who have occupied positions are not valid)
+    actions.extend(negotiate_actions(occupied_positions, required_moves))
+
+
+    
 
     # resource_tiles: list[Cell] = []
     # for y in range(height):
