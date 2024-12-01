@@ -3,7 +3,8 @@
 # This module contains helper functions that can be used over all classes
 #
 #
-
+from lux.game_constants import GAME_CONSTANTS
+from typing import List
 
 import logging
 import math
@@ -17,6 +18,8 @@ from lux.game_objects import Unit
 DIRECTIONS = Constants.DIRECTIONS
 DIRECTIONS = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
 
+
+logging.basicConfig(filename="helper_functions.log", level=logging.INFO)
 
 # TODO: Add unittests for this module
 
@@ -87,16 +90,21 @@ def get_cell_neighbours_eight(cell: Cell, gamestate):
     return neighbours
 
 
-def get_nearest_position(C, cells):
+def get_nearest_position(C: Position, cells: List[Position]):
     '''
     Given a cell `C` 
     Return the smallest distance and cell to it from a list of cells 
     '''
     nearest_position = None
     smallest_distance = math.inf
+    # logging.warning(f"cells: {cells}")
+    # logging.warning(f"C type: {type(C)}")
+    # C = Position(C[0], C[1])
+
 
     for cell in cells:
-        current_distance = C.pos.distance_to(cell.pos)
+        cell = Position(cell[0], cell[1])
+        current_distance = C.distance_to(cell)
         
         if current_distance < smallest_distance:
             smallest_distance = current_distance
@@ -261,3 +269,197 @@ def negotiate_actions(occupied_positions, requested_movements):
             )
 
     return actions
+
+def get_enemy_coverage(cells, opponent, opponent_id):
+    '''
+    This returns the number of opponent units and
+    the number of citytiles in a list of cells given.
+    '''
+    opponent_citytiles = []
+    for cell in cells:
+        if cell.citytile is not None:
+            if cell.citytile.team == opponent_id:
+                opponent_citytiles.append(cell.citytile)
+
+    cell_positions = [cell.pos for cell in cells]
+    opponent_units = []
+    for unit in opponent.units:
+        pos = next(
+            (p for p in cell_positions if p.equals(unit.pos)),
+            None,
+        )
+
+        if pos is not None:
+            opponent_units.append(unit)
+
+    return opponent_citytiles, opponent_units
+
+
+
+def get_closest_cluster_by_centroid(citytile, cluster_dict):
+    '''
+    We sort the clusters by the distance to the cluster center
+    '''
+    closest_distance = math.inf
+    closest_cluster = None
+
+    for id, cluster in cluster_dict.items():
+        distance = citytile.pos.distance_to(
+            cluster.get_centroid()
+        )
+        if distance < closest_distance:
+            closest_distance = distance
+            closest_cluster = cluster
+
+    return closest_cluster, closest_distance
+
+def get_citytile_score(
+    cluster,
+    game_state,
+    player_id,
+    opponent,
+    opponent_id
+):
+    '''
+    A simple mathematical model to calculate a citytile should build a worker.
+    '''
+    # directly proportional
+    resource_cell_score = len(cluster.resource_cells)
+    fuel_score = cluster.get_total_fuel() / 100
+
+    perimeter = get_perimeter(
+            cluster.resource_cells,
+            game_state        
+        )
+    perimeter_score = len(perimeter)
+
+    opponent_citytiles, opponent_units = get_enemy_coverage(
+        [game_state.map.get_cell_by_pos(Position(pos[0], pos[1])) for pos in perimeter],
+        opponent,
+        opponent_id,
+    )
+    opponent_workers_score = len(opponent_units) + 1
+    opponent_citytiles_score = len(opponent_citytiles) + 1
+
+    # inversely proportional
+    player_citytiles = []
+    for p in perimeter:
+        cell = game_state.map.get_cell_by_pos(Position(p[0], p[1]))
+        if cell.citytile is not None:
+            if cell.citytile.team == player_id:
+                player_citytiles.append(cell.citytile)
+
+    player_workers_score = 10 * len(cluster.units) + 1
+    player_citytiles_score = len(player_citytiles) + 1
+
+    no_player_unit_bonus = 10 if len(cluster.units) == 0 else 1
+
+    numerator = resource_cell_score * fuel_score * perimeter_score * \
+        no_player_unit_bonus * opponent_workers_score * \
+        opponent_citytiles_score
+
+    denominator = player_workers_score * player_citytiles_score
+
+    citytile_score = numerator / (denominator + 1.1)
+
+    return citytile_score
+
+def get_city_actions(
+    game_state,
+    game_state_info,
+    player,
+    clusters_dict,
+    player_id,
+    opponent,
+    opponent_id
+):
+    '''
+    This is actually simple. We greedily build worker if possible.
+    The only trick is if two citytiles can build only one worker,
+    we decide which gets to build by calculating the score.
+    '''
+    actions = []
+    units_capacity = sum([len(x.citytiles) for x in player.cities.values()])
+    units_count = len(player.units)
+
+    actionable_citytiles = []
+    for city in player.cities.values():
+        for citytile in city.citytiles:
+            if citytile.can_act():
+                actionable_citytiles.append(citytile)
+
+    citytiles_to_be_sorted = []
+    for citytile in actionable_citytiles:
+        # We do not keep track of which cluster a citytile belongs to.
+        # So, we need to find it here.
+        closest_cluster, _ = get_closest_cluster_by_centroid(
+            citytile,
+            clusters_dict
+        )
+        citytile_score = 0
+        if closest_cluster is not None:
+            citytile_score = get_citytile_score(
+                closest_cluster,
+                game_state,
+                player_id,
+                opponent,
+                opponent_id
+            )
+
+        citytiles_to_be_sorted.append({
+            'citytile': citytile,
+            'score': citytile_score
+        })
+
+    def compare(citytile1, citytile2):
+        return citytile2['score'] - citytile1['score']
+
+    sorted_citytiles = sorted(
+        citytiles_to_be_sorted,
+        key=cmp_to_key(compare)
+    )
+
+    for citytile in sorted_citytiles:
+        if units_count < units_capacity and \
+                game_state_info['turns_to_night'] > 4:
+            actions.append(
+                citytile['citytile'].build_worker()
+            )
+            units_count += 1
+        else:
+            if not player.researched_uranium():
+                actions.append(
+                    citytile['citytile'].research()
+                )
+
+    return actions
+
+
+def update_game_stats(turn):
+    MAX_DAYS = GAME_CONSTANTS['PARAMETERS']['MAX_DAYS']
+    DAY_LENGTH = GAME_CONSTANTS['PARAMETERS']['DAY_LENGTH']
+    NIGHT_LENGTH = GAME_CONSTANTS['PARAMETERS']['NIGHT_LENGTH']
+    FULL_LENTH = DAY_LENGTH + NIGHT_LENGTH
+
+    all_night_turns_lef = ((MAX_DAYS - 1 - turn) // FULL_LENTH + 1) \
+        * NIGHT_LENGTH
+
+    turns_to_night = (DAY_LENGTH - turn) % FULL_LENTH
+    turns_to_night = 0 if turns_to_night > 30 else turns_to_night
+
+    turns_to_dawn = FULL_LENTH - turn % FULL_LENTH
+    turns_to_dawn = 0 if turns_to_dawn > 10 else turns_to_dawn
+
+    is_day_time = turns_to_dawn == 0
+    is_night_time = turns_to_night == 0
+
+    if is_night_time:
+        all_night_turns_lef -= (10 - turns_to_dawn)
+
+    return {
+        'all_night_turns_left': all_night_turns_lef,
+        'turns_to_night': turns_to_night,
+        'turns_to_dawn': turns_to_dawn,
+        'is_day_time': is_day_time,
+        'is_night_time': is_night_time
+    }

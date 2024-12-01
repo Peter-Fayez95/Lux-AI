@@ -1,4 +1,4 @@
-from helperFunctions import get_directions
+from helperFunctions.helper_functions import get_directions
 
 
 class Mission:
@@ -7,9 +7,9 @@ class Mission:
 
     mission_type            str             Type of mission
     target_pos              Position        Target Position
-    responsible_unit_id     str             Responsible unit id
+    responsible_unit     str             Responsible unit id
     '''
-    def __init__(self, responsible_unit = None, type = None, target_pos=None):
+    def __init__(self, responsible_unit=None, type=None, target_pos=None):
         self.mission_type = type
         self.target_pos = target_pos
         self.responsible_unit = responsible_unit

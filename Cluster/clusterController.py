@@ -1,12 +1,12 @@
 import logging
 import math
 
-from typing import List, Dict, Tuple, Str
+# from typing import List, Dict, Tuple
 from Cluster.Cluster import Cluster
-from agent import game_state
+# from agent import game_state
 from lux.game_map import Cell
 
-from helperFuncions.helper_functions import (inside_map,
+from helperFunctions.helper_functions import (inside_map,
     get_cell_neighbours_eight, same_resource)
 
 logging.basicConfig(filename="ClusterController.log", level=logging.INFO)
@@ -66,7 +66,7 @@ class ClusterController:
                 if cell.has_resource() and not visited_cell[x][y]:
                     cluster_cells = []
                     
-                    logging.info(f"This cell has resources: {cell}")
+                    # logging.info(f"This cell has resources: {cell}")
                     
                     # Start DFS for this cluster
                     dfs(x, y, cluster_cells, game_state)
@@ -76,9 +76,9 @@ class ClusterController:
                         self.unionClusters(cluster_cells[0], cluster_cells[i])
 
                     current_cluster = Cluster(cell.resource.type, self.rank[self.get_cell_value(x, y)], cluster_cells)
-                    if cell.resource.resource_type == "wood":
+                    if cell.resource.type == "wood":
                         self.woodClusters.append(current_cluster)
-                    elif cell.resource.resource_type == "coal":
+                    elif cell.resource.type == "coal":
                         self.coalClusters.append(current_cluster)
                     else:
                         self.uraniumClusters.append(current_cluster)
@@ -88,7 +88,7 @@ class ClusterController:
 
     
     # find unique Cluster by its representative cell
-    def findCluster(self, cell) -> int:
+    def findCluster(self, cell):
         cell_value = self.get_cell_value(cell.pos.x, cell.pos.y)
         
         if self.parent[cell_value] != cell_value:
@@ -124,9 +124,9 @@ class ClusterController:
         if self.rank[ClusterRep1] == self.rank[ClusterRep2]:
             self.rank[ClusterRep2] += 1
 
-    def update_clusters(self, game_state):
+    def update_clusters(self, game_state, player):
         for Clusterid, cluster in self.clusterDict.items():
-            cluster.update(game_state)
+            cluster.update_cluster(game_state, player)
 
     def update_missions(self, game_state):
         for Clusterid, cluster in self.clusterDict.items():
@@ -143,11 +143,11 @@ class ClusterController:
 
             if current_cluster_score > maximum_score:
                 maximum_score = current_cluster_score
-                assigned_cluster = id
+                assigned_cluster = cluster
 
         return assigned_cluster
     
-    def get_units_without_clusters(self, player) -> List[Str]:
+    def get_units_without_clusters(self, player):
         units_with_clusters = []
         for id, cluster in self.clusterDict.items():
             units_with_clusters.extend(cluster.units)

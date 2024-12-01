@@ -11,7 +11,8 @@ from helperFunctions.helper_functions import cells_comparator_as_pair, get_cell_
 from Resources.resourceService import get_resources_from_cells
 
 from Weights.Cluster import cluster_weights
-from Missions import Mission, MissionController
+from Missions.Mission import Mission
+from Missions.MissionController import *
 from Missions.constants import BUILD_TILE, GUARD_CLUSTER
 
 
@@ -132,7 +133,6 @@ class Cluster:
         Check the score of this cluster for worker
         If the score is high enough, the worker should work for this cluster
         '''
-        pass
         opponent_id = 1 - player_id
 
         if len(self.resource_cells) == 0:
@@ -143,7 +143,7 @@ class Cluster:
 
         # cluster_area represents all of the cluster cells (including its perimeter)
         cluster_area = [
-            gamestate.map.get_cell_by_pos(pos) for pos in perimeter
+            gamestate.map.get_cell_by_pos(Position(pos[0], pos[1])) for pos in perimeter
         ]
 
         cluster_area.extend(self.resource_cells)
@@ -158,7 +158,7 @@ class Cluster:
         # And how many of the perimeter are our citytiles.
         player_citytiles = []
         for cell in perimeter:
-            cell = gamestate.map.get_cell_by_pos(cell)
+            cell = gamestate.map.get_cell_by_pos(Position(cell[0], cell[1]))
             if cell.citytile is not None:
                 if cell.citytile.team == player_id:
                     player_citytiles.append(cell.citytile)
@@ -168,7 +168,7 @@ class Cluster:
             len(self.resource_cells) * cluster_weights['RESOURCE_CELLS'] + \
             len(perimeter) * cluster_weights['PERIMETER'] + \
             len(player_citytiles) * cluster_weights['OUR_CITYTILES'] + \
-            len(self.units) * cluster_weights['PLAYER_UNITS']
+            len(self.units) * cluster_weights['OUR_UNITS']
             # len(opponent_units) * cluster_weights['OPPONENT_UNITS'] + \
             # len(opponent_citytiles) * cluster_weights['OPPONENT_CITYTILES']
 
@@ -191,7 +191,7 @@ class Cluster:
         # Update Cluster Units
         player_all_units = set(unit.id for unit in player.units)
 
-        cluster_units = set(unit_id for unit_id in self.units if unit_id in player_all_units)
+        cluster_units = list(unit_id for unit_id in self.units if unit_id in player_all_units)
 
         self.units = cluster_units
 
@@ -213,14 +213,14 @@ class Cluster:
         2- Remove all finished GUARD_CLUSTER missions
 
         '''
-        MissionController.remove_finished_tile_missions(self.missions, game_state)
-        MissionController.remove_finished_guard_missions(self.missions, game_state)
+        remove_finished_tile_missions(self.missions, game_state)
+        remove_finished_guard_missions(self.missions)
 
     def remove_missions_with_no_units(self):
         '''
         Remove all missions with no responsible units
         '''
-        MissionController.remove_missions_with_no_units(self.missions, self.units)
+        remove_missions_with_no_units(self.missions, self.units)
 
 
     def update_missions(self, game_state):
@@ -316,9 +316,7 @@ class Cluster:
         if len(target_positions) == 0:
             return
         
-        mission_controller = MissionController()
-
-        missions = mission_controller.negotiate_missions(
+        missions = negotiate_missions(
             self.missions,
             units,
             target_positions
@@ -343,11 +341,11 @@ class Cluster:
 
         return actions
     
-    def get_required_moves(self):
+    def get_required_moves(self, player):
         moves = []
 
         for mission in self.missions:
-            unit = get_unit_by_id(mission.responsible_unit.id)
+            unit = get_unit_by_id(mission.responsible_unit.id, player)
             target_pos = mission.target_pos
 
             if unit is None or target_pos is None:
