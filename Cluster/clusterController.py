@@ -35,13 +35,15 @@ class ClusterController:
         self.woodClusters = []
         self.coalClusters = []
         self.uraniumClusters = []
-        logging.info("ClusterController Started")
+        # logging.info("ClusterController Started")
 
     def get_cell_value(self, x: int, y: int):
             return x * self.width + y
 
     # This method is only called once (at the game start)
     def getClustersRolling(self, width, height, game_state):
+        # logging.info("Getting Clusters Rolling")
+        # print("Getting Clusters Rolling")
         visited_cell = [[False for _ in range(height)] for _ in range(width)]
 
 
@@ -128,18 +130,30 @@ class ClusterController:
         for Clusterid, cluster in self.clusterDict.items():
             cluster.update_cluster(game_state, player)
 
-    def update_missions(self, game_state):
+    def update_missions(self, game_state, player):
+        # logging.debug(f"Updating Missions for Step {step}")
+        # print(f"Updating Missions for Step {step}")
         for Clusterid, cluster in self.clusterDict.items():
-            cluster.update_missions(game_state)
+            cluster.update_missions(game_state, player)
 
 
-    def assign_worker(self, worker, game_state, player_id):
+    def assign_worker(self, worker, game_state, player, player_id, opponent):
         # Scores[Int -> Score]
         # For Each cluster represented by id, get its score for this worker
+
+        copyDict = self.clusterDict.copy()
+
+        for id, cluster in self.clusterDict.items():
+            if not player.researched_coal() and cluster.resource_type == "coal":
+                del copyDict[id]
+            if not player.researched_uranium() and cluster.resource_type == "uranium":
+                del copyDict[id]
+
         maximum_score = -math.inf
         assigned_cluster = None
-        for id, cluster in self.clusterDict.items():
-            current_cluster_score = cluster.get_cluster_score_for_worker(worker, game_state, player_id)
+
+        for id, cluster in copyDict.items():
+            current_cluster_score = cluster.get_cluster_score_for_worker(worker, game_state, player_id, opponent)
 
             if current_cluster_score > maximum_score:
                 maximum_score = current_cluster_score

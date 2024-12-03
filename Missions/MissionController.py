@@ -6,7 +6,8 @@ from lux.game_map import Position
 
 
 from Missions.Mission import Mission
-from Missions.constants import BUILD_TILE
+from Missions.constants import BUILD_TILE, EXPLORE, GUARD_CLUSTER
+from helperFunctions.helper_functions import get_unit_by_id
 
 
 def remove_finished_tile_missions(missions, game_state):
@@ -20,14 +21,24 @@ def remove_finished_tile_missions(missions, game_state):
             if target_pos.citytile:
                 del missions[missions.index(mission)]
     
+def remove_finished_explore_missions(missions, player):
+    '''
+    Remove all finished EXPLORE missions
+    '''
+    for mission in missions.copy():
+         if mission.mission_type == EXPLORE:
+            unit = get_unit_by_id(mission.responsible_unit, player)
+            if unit is not None and unit.pos.equals(mission.target_pos) and mission.allow_target_overwrite is True:
+                del missions[missions.index(mission)]
 
-def remove_finished_guard_missions(missions):
+def remove_finished_guard_missions(missions, player):
     '''
     Remove all finished GUARD_CLUSTER missions
     '''
     for mission in missions.copy():
-        if mission.mission_type == BUILD_TILE:
-            if mission.target_pos == mission.responsible_unit.pos:
+        if mission.mission_type == GUARD_CLUSTER:
+            unit = get_unit_by_id(mission.responsible_unit, player)
+            if mission.target_pos == unit.pos:
                 del missions[missions.index(mission)]
 
 def remove_missions_with_no_units(missions, units):
@@ -35,7 +46,7 @@ def remove_missions_with_no_units(missions, units):
     Remove all missions with no responsible units
     '''
     for mission in missions.copy():
-        if mission.responsible_unit.id not in units:
+        if mission.responsible_unit is not None and mission.responsible_unit not in units:
             del missions[missions.index(mission)]
 
 
