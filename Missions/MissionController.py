@@ -16,7 +16,7 @@ def remove_finished_tile_missions(missions, game_state):
     '''
     for mission in missions.copy():
         if mission.mission_type == BUILD_TILE:
-            target_pos = game_state.get_cell_by_pos(mission.target_pos)
+            target_pos = game_state.map.get_cell_by_pos(mission.target_pos)
             
             if target_pos.citytile:
                 del missions[missions.index(mission)]
@@ -28,7 +28,7 @@ def remove_finished_explore_missions(missions, player):
     for mission in missions.copy():
          if mission.mission_type == EXPLORE:
             unit = get_unit_by_id(mission.responsible_unit, player)
-            if unit is not None and unit.pos.equals(mission.target_pos) and mission.allow_target_overwrite is True:
+            if unit is not None and unit.pos.equals(mission.target_pos) and mission.allow_target_change is True:
                 del missions[missions.index(mission)]
 
 def remove_finished_guard_missions(missions, player):
@@ -51,8 +51,9 @@ def remove_missions_with_no_units(missions, units):
 
 
 def negotiate_missions(missions, units, targets):
+    # print("Negotiating missions")
     unit_positions = [(unit.pos.x, unit.pos.y) for unit in units]
-    target_positions = [(target.x, target.y) for target in targets]
+    target_positions = [(target[0], target[1]) for target in targets]
 
     def distance_to(pos1, pos2):
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
@@ -67,6 +68,9 @@ def negotiate_missions(missions, units, targets):
     for i in range(len(row_ind)):
         key = units[row_ind[i]].id
         target = target_positions[col_ind[i]]
-        missions[key].update_target_pos(Position(target[0], target[1]))
+        for mission in missions:
+            if mission.responsible_unit == key:
+                mission.change_target_pos(Position(target[0], target[1]))
+                # print(f"Unit {key} assigned to target {target}")
 
     return missions

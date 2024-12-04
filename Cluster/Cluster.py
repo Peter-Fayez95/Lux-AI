@@ -51,7 +51,7 @@ class Cluster:
                     distinct_cells.add((neighbour.pos.x, neighbour.pos.y))
 
         
-        # distinct_cells = sorted(list(distinct_cells))
+        distinct_cells = sorted(list(distinct_cells))
         return distinct_cells
     
 
@@ -196,13 +196,17 @@ class Cluster:
 
         # Update Perimeter
         self.perimeter = self.get_perimeter(game_state)
+        # print("PERIMETER: ", self.perimeter[0][0], self.perimeter[0][1])
 
         # Update Perimeter Cells without CityTiles
-        self.exposed_perimeter = [
-            (x, y) for (x, y) in self.perimeter
-            if game_state.map.get_cell(x, y).citytile is not None and
-                not game_state.map.get_cell(x, y).has_resource()
-        ]
+        exposed = []
+        for cell in self.perimeter:
+            pos = Position(cell[0], cell[1])
+            if game_state.map.get_cell_by_pos(pos).citytile is None and not game_state.map.get_cell_by_pos(pos).has_resource(): 
+                exposed.append(cell)
+
+        self.exposed_perimeter = exposed
+        # print("EXPOSED PERIMETER: ", self.exposed_perimeter)
 
     def remove_finished_missions(self, game_state, player):
         '''
@@ -238,27 +242,36 @@ class Cluster:
         
         units_without_missions = [
             unit_id for unit_id in self.units if unit_id not in 
-                [mission.responsible_unit.id for mission in self.missions]
+                [mission.responsible_unit for mission in self.missions]
         ]
 
         cells_without_tiles = self.exposed_perimeter
+        # print("sadasdsdsadsadsad", cells_without_tiles)
         build_mission_count = 0
 
         for unit_id in units_without_missions:
             if build_mission_count == len(cells_without_tiles):
                 break
+            
+            if cells_without_tiles[build_mission_count] is int:
+                # print("CELLS WITHOUT TILES: ", cells_without_tiles)
+                continue
 
-            self.missions.append(Mission(
+            pos = Position(cells_without_tiles[build_mission_count][0], cells_without_tiles[build_mission_count][1])
+
+            mission = Mission(
                 unit_id,
                 BUILD_TILE,
-                cells_without_tiles[build_mission_count]
-            ))
+                pos
+            )
+        
+            self.missions.append(mission)
 
             build_mission_count += 1
 
         units_without_missions = [
             unit_id for unit_id in self.units if unit_id not in 
-                [mission.responsible_unit.id for mission in self.missions]
+                [mission.responsible_unit for mission in self.missions]
         ]
 
         guard_mission_count = 0
@@ -266,17 +279,19 @@ class Cluster:
             if guard_mission_count == len(self.resource_cells):
                 break
 
-            self.missions.append(Mission(
+            mission = Mission(
                 unit_id,
                 GUARD_CLUSTER,
-                self.resource_cells[guard_mission_count].pos  
-            ))
+                self.resource_cells[guard_mission_count].pos
+            )
+
+            self.missions.append(mission)
             guard_mission_count += 1
 
         # If we have more workers than required, we release them.
         released_units = [
             unit_id for unit_id in self.units if unit_id not in 
-                [mission.responsible_unit.id for mission in self.missions]
+                [mission.responsible_unit for mission in self.missions]
         ]
 
         for unit_id in released_units:
@@ -298,6 +313,7 @@ class Cluster:
                     units.append(get_unit_by_id(mission.responsible_unit, player))
 
         if len(units) == 0:
+            # print("No units to assign missions")
             return
         
         target_positions = []
@@ -321,21 +337,21 @@ class Cluster:
             return
         
         missions = negotiate_missions(
-            self.missions,
+            deepcopy(self.missions),
             units,
             target_positions
         )
 
         self.missions = missions
 
-    def get_build_actions(self, game_stats):
+    def get_build_actions(self, game_stats, player):
         actions = []
 
         for mission in self.missions:
             if mission.mission_type == BUILD_TILE and mission.target_pos is not None:
-                    unit = get_unit_by_id(mission.responsible_unit.id)
+                    unit = get_unit_by_id(mission.responsible_unit, player)
                     
-                    if unit.pos.equals(mission.target_pos) and unit.get_cargo_space_left() == 0 and unit.can_act() and game_stats['turns_until_night'] > 5:
+                    if unit.pos.equals(mission.target_pos) and unit.get_cargo_space_left() == 0 and unit.can_act() and game_stats['turns_to_night'] > 5:
                         actions.append(unit.build_city())
 
         return actions
@@ -351,7 +367,7 @@ class Cluster:
                 continue
 
             if unit.can_act() and not unit.pos.equals(target_pos):
-                moves.append(mission.get_moves())
+                moves.append(mission.get_moves(player))
 
         return moves
 
@@ -359,7 +375,8 @@ class Cluster:
     def handle_explore_missions(
         self,
         game_state_info,
-        resource_cells
+        resource_cells,
+        player
     ):
         '''
         This function's responsibility is to prevent unit dying at night
@@ -372,8 +389,9 @@ class Cluster:
                     EXPLORE and \
                     mission.responsible_unit is not None:
 
+                unit = get_unit_by_id(mission.responsible_unit, player)
                 closest_perimeter, distance = get_nearest_position(
-                    mission.responsible_unit.pos,
+                    unit.pos,
                     self.exposed_perimeter
                 )
 
@@ -389,7 +407,18 @@ class Cluster:
 
                 night_fuel_required = night_turns_required * 4
 
-                unit_fuel = 100 - mission.unit.get_cargo_space_left()
+                # print("RESPOSIBLE UNIT: ", mission.responsible_unit)
+                # i = 1
+                # for unit in player.units:
+                #     print(f"UNIT #{i}: {unit}")
+                #     i += 1
+
+                # exit(0)
+
+                unit = get_unit_by_id(mission.responsible_unit, player)
+                if unit is None:
+                    continue
+                unit_fuel = 100 - unit.get_cargo_space_left()
 
                 # If the unit does not have enough fuel, we want it to go
                 # to nearest resource to collect it.
@@ -403,20 +432,20 @@ class Cluster:
                     #         f'{mission.unit.id} You are going to die at night'
                     #     )
                     # )
-                    closest_resource_cell, distance = get_nearest_position(mission.unit.pos, resource_cells)
+                    closest_resource_cell, distance = get_nearest_position(unit.pos, resource_cells)
 
                     # We do not need to go to the resource cell,
                     # just getting to the adjacent cell is enough
                     if closest_resource_cell is not None:
                         if distance == 1:
-                            mission.update_target_pos(mission.unit.pos)
+                            mission.change_target_pos(unit.pos)
 
-                        mission.update_target_pos(closest_resource_cell.pos)
+                        mission.change_target_pos(closest_resource_cell)
                         # This is to force non-negotiable target position.
                         # He/she needs to get resource.
                         mission.allow_target_change = False
                 else:
-                    mission.update_target_pos(closest_perimeter)
+                    mission.change_target_pos(closest_perimeter)
                     mission.allow_target_change = True
 
         return self

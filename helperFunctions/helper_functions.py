@@ -16,7 +16,7 @@ from lux.constants import Constants
 from lux.game_objects import Unit
 
 DIRECTIONS = Constants.DIRECTIONS
-DIRECTIONS = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
+# DIRECTIONS = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
 
 
 logging.basicConfig(filename="helper_functions.log", level=logging.INFO)
@@ -53,7 +53,7 @@ def get_cell_neighbours_four(cell: Cell, gamestate):
     Get Cells Four Neighbours
     '''
     neighbours = []
-    for dir in DIRECTIONS:
+    for dir in [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]:
         pos = deepcopy(cell.pos)
         pos = pos.translate(dir, 1)
 
@@ -73,13 +73,15 @@ def get_cell_neighbours_eight(cell: Cell, gamestate):
     dir1 = 0
     dir2 = 1
 
-    for i in range(len(DIRECTIONS)):
+    # Get the other four neighbours
+    for i in range(4):
+        directions = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
         pos = deepcopy(cell.pos)
-        pos = pos.translate(DIRECTIONS[dir1], 1)
-        pos = pos.translate(DIRECTIONS[dir2], 1)
+        pos = pos.translate(directions[dir1], 1)
+        pos = pos.translate(directions[dir2], 1)
         
-        dir1 = (dir1 + 1) % len(DIRECTIONS)
-        dir2 = (dir2 + 1) % len(DIRECTIONS)
+        dir1 = (dir1 + 1) % len(directions)
+        dir2 = (dir2 + 1) % len(directions)
 
         if inside_map(pos, gamestate.map.width, gamestate.map.height):
 
@@ -103,7 +105,10 @@ def get_nearest_position(C: Position, cells: List[Position]):
 
 
     for cell in cells:
-        cell = Position(cell[0], cell[1])
+        if type(cell) == tuple:
+            cell = Position(cell[0], cell[1])
+        elif type(cell) == Cell:
+            cell = cell.pos
         current_distance = C.distance_to(cell)
         
         if current_distance < smallest_distance:
