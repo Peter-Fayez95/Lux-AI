@@ -1,5 +1,6 @@
 import logging
 import math
+from copy import deepcopy
 
 # from typing import List, Dict, Tuple
 from Cluster.Cluster import Cluster
@@ -9,7 +10,7 @@ from lux.game_map import Cell
 from helperFunctions.helper_functions import (inside_map,
     get_cell_neighbours_eight, same_resource)
 
-logging.basicConfig(filename="ClusterController.log", level=logging.INFO)
+# logging.basicConfig(filename="ClusterController.log", level=logging.INFO)
 
 
 class ClusterController:
@@ -133,7 +134,7 @@ class ClusterController:
     def update_missions(self, game_state, player):
         # logging.debug(f"Updating Missions for Step {step}")
         # print(f"Updating Missions for Step {step}")
-        for Clusterid, cluster in self.clusterDict.items():
+        for cluster in self.clusterDict.values():
             cluster.update_missions(game_state, player)
 
 
@@ -141,7 +142,16 @@ class ClusterController:
         # Scores[Int -> Score]
         # For Each cluster represented by id, get its score for this worker
 
-        copyDict = self.clusterDict.copy()
+        copyDict = {}
+
+        for id, cluster in self.clusterDict.items():
+            copyDict[id] = cluster
+
+        # for id, cluster in self.clusterDict.items():
+        #     print("Original Cluster: ", cluster)
+
+        # for id, cluster in copyDict.items():
+        #     print("Copy Cluster: ", cluster)
 
         for id, cluster in self.clusterDict.items():
             if not player.researched_coal() and cluster.resource_type == "coal":
@@ -152,18 +162,20 @@ class ClusterController:
         maximum_score = -math.inf
         assigned_cluster = None
 
-        for id, cluster in copyDict.items():
+        for cluster in copyDict.values():
             current_cluster_score = cluster.get_cluster_score_for_worker(worker, game_state, player_id, opponent)
 
             if current_cluster_score > maximum_score:
                 maximum_score = current_cluster_score
                 assigned_cluster = cluster
 
+        # print(assigned_cluster)
+
         return assigned_cluster
     
     def get_units_without_clusters(self, player):
         units_with_clusters = []
-        for id, cluster in self.clusterDict.items():
+        for cluster in self.clusterDict.values():
             units_with_clusters.extend(cluster.units)
 
         units_without_clusters = []

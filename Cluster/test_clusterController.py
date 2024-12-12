@@ -5,7 +5,7 @@ from Cluster.clusterController import ClusterController
 from helperFunctions.helper_functions import get_cell_neighbours_four, get_cell_neighbours_eight
 import logging
 
-logging.basicConfig(filename="ClusterController.log", level=logging.INFO)
+# logging.basicConfig(filename="ClusterController.log", level=logging.INFO)
 
 
 # TODO: Refactor Game API for these classes

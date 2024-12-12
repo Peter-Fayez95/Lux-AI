@@ -34,13 +34,12 @@ def get_minable_resource_cells(
     ]
     return minable_resource_cells
 
-def get_resources_from_cells(gamestate, cells):
+def get_resources_from_cells(gamestate, cells: List[Cell]):
     '''
     Given the Cells list `cells`
     return the resource cells from this list
     '''
     resource_cells = []
-
     for cell in cells:
         if cell.has_resource():
             resource_cells.append(cell)

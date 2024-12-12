@@ -15,6 +15,9 @@ def remove_finished_tile_missions(missions, game_state):
     Remove all finished BUILD_TILE missions
     '''
     for mission in missions.copy():
+        if mission.target_pos is None:
+            continue
+        
         if mission.mission_type == BUILD_TILE:
             target_pos = game_state.map.get_cell_by_pos(mission.target_pos)
             
@@ -26,9 +29,12 @@ def remove_finished_explore_missions(missions, player):
     Remove all finished EXPLORE missions
     '''
     for mission in missions.copy():
-         if mission.mission_type == EXPLORE:
+        if mission.target_pos is None:
+            continue
+        
+        if mission.mission_type == EXPLORE:
             unit = get_unit_by_id(mission.responsible_unit, player)
-            if unit is not None and unit.pos.equals(mission.target_pos) and mission.allow_target_change is True:
+            if unit.pos.equals(mission.target_pos) and mission.allow_target_change:
                 del missions[missions.index(mission)]
 
 def remove_finished_guard_missions(missions, player):
@@ -36,6 +42,9 @@ def remove_finished_guard_missions(missions, player):
     Remove all finished GUARD_CLUSTER missions
     '''
     for mission in missions.copy():
+        if mission.target_pos is None:
+            continue
+
         if mission.mission_type == GUARD_CLUSTER:
             unit = get_unit_by_id(mission.responsible_unit, player)
             if mission.target_pos == unit.pos:
@@ -53,7 +62,12 @@ def remove_missions_with_no_units(missions, units):
 def negotiate_missions(missions, units, targets):
     # print("Negotiating missions")
     unit_positions = [(unit.pos.x, unit.pos.y) for unit in units]
-    target_positions = [(target[0], target[1]) for target in targets]
+
+    targets_to_positions = targets
+    if isinstance(targets[0], tuple):
+        targets_to_positions = [Position(t[0], t[1]) for t in targets]
+
+    target_positions = [(target.x, target.y) for target in targets_to_positions]
 
     def distance_to(pos1, pos2):
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])

@@ -19,7 +19,7 @@ DIRECTIONS = Constants.DIRECTIONS
 # DIRECTIONS = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
 
 
-logging.basicConfig(filename="helper_functions.log", level=logging.INFO)
+# logging.basicConfig(filename="helper_functions.log", level=logging.INFO)
 
 # TODO: Add unittests for this module
 
@@ -117,10 +117,13 @@ def get_nearest_position(C: Position, cells: List[Position]):
 
     return nearest_position, smallest_distance
 
-def get_unit_by_id(id, player) -> Unit:
+def get_unit_by_id(id1, player) -> Unit:
     for unit in player.units:
-        if unit.id == id:
+        if unit.id == id1:
             return unit
+        
+    print(f"Unit with id {id1} not found")
+    
         
 
 def get_perimeter(cells, game_state):
@@ -139,6 +142,12 @@ def get_perimeter(cells, game_state):
 
 
 def get_build_position_score(game_state, opponent, pos, center):
+    if isinstance(center, tuple):
+        center = Position(center[0], center[1])
+    
+    if isinstance(pos, tuple):
+        pos = Position(pos[0], pos[1])
+        
     travel_distance = center.distance_to(pos)
     travel_distance_score = 100 / ((travel_distance ** 2) + 1)
 
@@ -157,23 +166,33 @@ def get_build_position_score(game_state, opponent, pos, center):
 
     perimeter_score = 0
     for p in perimeter:
-        cell = game_state.map.get_cell_by_pos(p)
+        pos = Position(p[0], p[1])
+        cell = game_state.map.get_cell_by_pos(pos)
         if cell.citytile is not None:
             perimeter_score += 2
 
-    final_score = perimeter_score + opponent_distance_score \
-        + travel_distance_score
+    final_score = perimeter_score + opponent_distance_score + travel_distance_score
 
     return final_score
 
 
-def get_important_positions(game_state, opponent, available_targets, units):
+def get_important_positions(game_state, opponent, available_targets, missions, player):
 
-    sum_x = sum([unit.pos.x for unit in units])
-    sum_y = sum([unit.pos.y for unit in units])
+    sum_x = 0
+    sum_y = 0
 
-    mean_x = sum_x / len(units)
-    mean_y = sum_y / len(units)
+    for mission in missions:
+        if mission.responsible_unit is None:
+            continue
+
+        unit = get_unit_by_id(mission.responsible_unit, player)
+        sum_x += unit.pos.x
+        sum_y += unit.pos.y
+
+    
+
+    mean_x = sum_x / len(missions)
+    mean_y = sum_y / len(missions)
 
     center = Position(mean_x, mean_y)
 
@@ -190,7 +209,7 @@ def get_important_positions(game_state, opponent, available_targets, units):
 
     pos_score_vector.sort(key=cmp_to_key(compare))
 
-    return [pos_score[1] for pos_score in pos_score_vector][:len(units)]
+    return [pos_score[1] for pos_score in pos_score_vector][:len(missions)]
 
 def get_directions(src, dest):
     directions = []

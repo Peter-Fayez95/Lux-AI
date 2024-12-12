@@ -18,8 +18,6 @@ from helperFunctions.helper_functions import get_unit_by_id, get_directions, \
         negotiate_actions, update_game_stats, get_city_actions, get_opponent_tiles
 
 
-DIRECTIONS = Constants.DIRECTIONS
-game_state = None
 
 logging.basicConfig(filename="Game.log", level=logging.INFO, force=True)
 
@@ -81,27 +79,44 @@ def agent(observation, configuration):
         assigned_cluster = cluster_controller.assign_worker(unit, game_state, player, my_id, opponent)
 
         if assigned_cluster is not None:
+            # logging.warning(f"Unit {unit.id} assigned to Cluster at {assigned_cluster.get_centroid().x} {assigned_cluster.get_centroid().y}")
             assigned_cluster.add_unit(unit.id)
-            current_mission = Mission(responsible_unit=unit.id, type=EXPLORE, target_pos=None)
+            current_mission = Mission(responsible_unit=unit.id, mission_type=EXPLORE)
             assigned_cluster.missions.append(current_mission)
 
+    units_wo_clusters = cluster_controller.get_units_without_clusters(player)
+    # print("Number of Units without Clusters: ", len(units_wo_clusters))
     
-    # for id, cluster in cluster_controller.clusterDict.items():
+    # ghost_units = []
+
+    for cluster in cluster_controller.clusterDict.values():
+        for mission in cluster.missions:
+            unit = get_unit_by_id(mission.responsible_unit, player)
+            mission.change_responsible_unit(unit.id)
+
+    # for cluster in cluster_controller.clusterDict.values():
     #     for mission in cluster.missions:
-    #         # unit = get_unit_by_id(mission.responsible_unit, player)
-    #         mission.change_responsible_unit(unit)
+    #         if mission.responsible_unit is None:
+    #             logging.warning(f"Mission {mission} has no responsible unit")
 
+    # for unit in player.units:
+    #     logging.info(f"MY Unit {unit.id}")
 
+    # for unit in ghost_units:
+    #     logging.warning(f"{unit} is a ghost unit")
+    
+    # print("------------------")
 
     # Now, all units have missions assigned to them
-    for id, cluster in cluster_controller.clusterDict.items():
-        
+    for cluster in cluster_controller.clusterDict.values():
+        # logging.warning(f"Cluster {cluster} has {len(cluster.missions)} missions")
 
-        cluster.assign_targets_to_missions(game_state, player, opponent, BUILD_TILE)
-        cluster.assign_targets_to_missions(game_state, player, opponent, GUARD_CLUSTER)
+        cluster.assign_targets_to_missions(game_state, player, opponent, BUILD_TILE, observation['step'])
+        cluster.assign_targets_to_missions(game_state, player, opponent, GUARD_CLUSTER, observation['step'])
 
+        # logging.warning(f"zzz1")
         cluster.handle_explore_missions(game_stats, minable_resources, player)
-        cluster.assign_targets_to_missions(game_state, player, opponent, EXPLORE)
+        cluster.assign_targets_to_missions(game_state, player, opponent, EXPLORE, observation['step'])
 
         # if cluster.missions != []:
             # print(cluster.missions[0].target_pos, cluster.missions[0].mission_type)
@@ -131,8 +146,8 @@ def agent(observation, configuration):
                 
                 # This condition is not supposed to be here
                 # Should look into this
-                if unit is not None:
-                    units_without_target_positions.add((unit.pos.x, unit.pos.y))
+                # if unit is not None:
+                units_without_target_positions.add((unit.pos.x, unit.pos.y))
     
     
     occupied_positions = occupied_positions.union(
@@ -157,6 +172,8 @@ def agent(observation, configuration):
     occupied_positions = occupied_positions.difference(player_citytiles)
 
 
+
+
     # GET ACTIONS
     # ____________
 
@@ -164,13 +181,11 @@ def agent(observation, configuration):
     for id, cluster in cluster_controller.clusterDict.items():
         if len(cluster.missions) == 0:
             continue
-
+        
+        # print(f"This cluster has {len(cluster.missions)} missions")
         actions.extend(cluster.get_build_actions(game_stats, player))
         moves = cluster.get_required_moves(player)
         
-        # This condition is not supposed to be here
-        # Should look into this
-        # if moves is not None:
         required_moves.extend(moves)
 
     # print(required_moves)
@@ -179,9 +194,9 @@ def agent(observation, configuration):
     # Add the valid actions (those who have occupied positions are not valid)
     actions.extend(negotiate_actions(occupied_positions, required_moves))
 
-    actions.extend(get_city_actions(game_state, 
-                                    game_stats, 
-                                    player, 
+    actions.extend(get_city_actions(game_state,
+                                    game_stats,
+                                    player,
                                     cluster_controller.clusterDict, 
                                     my_id,
                                     opponent,
@@ -245,5 +260,6 @@ def agent(observation, configuration):
     # time.sleep(3)
 
     # print(actions)
+    logging.debug("------------------------------")
 
     return actions

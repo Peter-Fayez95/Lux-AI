@@ -9,15 +9,15 @@ class Mission:
     target_pos              Position        Target Position
     responsible_unit        str             Responsible unit id
     '''
-    def __init__(self, responsible_unit=None, type=None, target_pos=None):
-        self.mission_type = type
+    def __init__(self, responsible_unit=None, mission_type=None, target_pos=None):
+        self.mission_type = mission_type
         
         if target_pos is not None and isinstance(target_pos, tuple):
             target_pos = Position(target_pos[0], target_pos[1])
         
         self.target_pos = target_pos
         self.responsible_unit = responsible_unit
-        self.allow_target_change = False
+        self.allow_target_change = True
         
     
     def change_responsible_unit(self, responsible_unit):
