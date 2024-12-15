@@ -333,7 +333,7 @@ def get_closest_cluster_by_centroid(citytile, cluster_dict):
         )
         if distance < closest_distance:
             closest_distance = distance
-            closest_cluster = cluster
+            closest_cluster = id
 
     return closest_cluster, closest_distance
 
@@ -345,7 +345,7 @@ def get_citytile_score(
     opponent_id
 ):
     '''
-    A simple mathematical model to calculate a citytile should build a worker.
+    A simple mathematical model to calculate if a citytile should build a worker.
     '''
     # directly proportional
     resource_cell_score = len(cluster.resource_cells)
@@ -420,7 +420,9 @@ def get_city_actions(
             citytile,
             clusters_dict
         )
+        closest_cluster = clusters_dict[closest_cluster]
         citytile_score = 0
+        
         if closest_cluster is not None:
             citytile_score = get_citytile_score(
                 closest_cluster,

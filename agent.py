@@ -139,7 +139,7 @@ def agent(observation, configuration):
 
     units_without_target_positions = set()
 
-    for id, cluster in cluster_controller.clusterDict.items():
+    for cluster in cluster_controller.clusterDict.values():
         for mission in cluster.missions:
             if mission.target_pos is None:
                 unit = get_unit_by_id(mission.responsible_unit, player)
@@ -155,7 +155,7 @@ def agent(observation, configuration):
     )
 
     units_at_target_positions = set()
-    for id, cluster in cluster_controller.clusterDict.items():
+    for cluster in cluster_controller.clusterDict.values():
         for mission in cluster.missions:
             if mission.target_pos is not None and mission.responsible_unit is not None:
                 unit = get_unit_by_id(mission.responsible_unit, player)
@@ -178,12 +178,16 @@ def agent(observation, configuration):
     # ____________
 
     required_moves = list()
-    for id, cluster in cluster_controller.clusterDict.items():
+    for cluster in cluster_controller.clusterDict.values():
         if len(cluster.missions) == 0:
             continue
         
         # print(f"This cluster has {len(cluster.missions)} missions")
         actions.extend(cluster.get_build_actions(game_stats, player))
+        
+    
+
+    for cluster in cluster_controller.clusterDict.values():
         moves = cluster.get_required_moves(player)
         
         required_moves.extend(moves)

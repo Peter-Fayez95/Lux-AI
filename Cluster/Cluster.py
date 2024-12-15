@@ -371,7 +371,7 @@ class Cluster:
             unit = get_unit_by_id(mission.responsible_unit, player)
             target_pos = mission.target_pos
 
-            if unit is None or target_pos is None:
+            if not unit or not target_pos:
                 continue
 
             if unit.can_act() and not unit.pos.equals(target_pos):
