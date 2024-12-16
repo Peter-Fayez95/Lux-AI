@@ -1,4 +1,4 @@
 
-BUILD_TILE = 0
-GUARD_CLUSTER = 1
-EXPLORE = 2
+BUILD_TILE = "build_tile"
+GUARD_CLUSTER = "guard_cluster"
+EXPLORE = "explore"

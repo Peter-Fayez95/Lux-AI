@@ -14,6 +14,8 @@ from Cluster.clusterController import ClusterController
 from Resources.resourceService import get_resources, get_minable_resource_cells
 from Missions.Mission import Mission
 from Missions.constants import BUILD_TILE, GUARD_CLUSTER, EXPLORE
+from Missions.MissionController import get_annotations
+
 from helperFunctions.helper_functions import get_unit_by_id, get_directions, \
         negotiate_actions, update_game_stats, get_city_actions, get_opponent_tiles
 
@@ -40,7 +42,8 @@ def agent(observation, configuration):
         cluster_controller.getClustersRolling(width, height, game_state)
     else:
         game_state._update(observation["updates"])
-    
+
+    step = observation["step"]
 
     actions = []
     game_stats = update_game_stats(observation['step'])
@@ -50,18 +53,29 @@ def agent(observation, configuration):
     ### AI Code goes down here! ### 
     player = game_state.players[observation.player]
     opponent = game_state.players[(observation.player + 1) % 2]
-
+    
 
     # Get resources
     resource_cells = get_resources(game_state)
+
+    # if step == 49:
+    #     logging.info(f"Resources: {[(c.pos.x, c.pos.y) for c in resource_cells]}")
 
     # logging.info(f"Number of Resource Cells: {len(resource_cells)}")
     
     opponent_citytiles = get_opponent_tiles(opponent)
 
+    # if step == 49:
+    #     logging.info(f"Opponent Tiles: {[(c.pos.x, c.pos.y) for c in opponent_citytiles]}")
+
+    # logging.info(f"Number of Opponent City Tiles: {len(opponent_citytiles)
+
     # Get resources that can be mined
     minable_resources = get_minable_resource_cells(player, resource_cells)
     # logging.info(f"Number of Minable Resource Cells: {len(minable_resources)}")
+
+    # if step == 49:
+    #     logging.info(f"Minable Resources: {[(c.pos.x, c.pos.y) for c in minable_resources]}")
 
     cluster_controller.update_clusters(game_state, player)
     cluster_controller.update_missions(game_state, player)
@@ -70,29 +84,33 @@ def agent(observation, configuration):
     units_wo_clusters = cluster_controller.get_units_without_clusters(player)
     # print("DDDDD", units_wo_clusters)
 
+    if step < 100:
+        logging.info(f"Step {observation['step']}:")
+        logging.info(f"Units without clusters: {[unit.id for unit in units_wo_clusters]}")
 
-    # if observation["step"] == 0:
-    #     print(f"Number of Units without Clusters: {len(units_wo_clusters)}")
 
-    # Assign Missions to units without homes
     for unit in units_wo_clusters:
-        assigned_cluster = cluster_controller.assign_worker(unit, game_state, player, my_id, opponent)
+        # if observation["step"] == 11:
+        #     logging.warning(f"sfsaffaf")
+        assigned_cluster, score = cluster_controller.assign_worker(unit, game_state, player, my_id, opponent, observation["step"])
 
         if assigned_cluster is not None:
-            # logging.warning(f"Unit {unit.id} assigned to Cluster at {assigned_cluster.get_centroid().x} {assigned_cluster.get_centroid().y}")
+            
+            # if step == 49:
+            #     logging.warning(f"Unit {unit.id} assigned to Cluster at {assigned_cluster.get_centroid().x} {assigned_cluster.get_centroid().y}")
+                
+            
             assigned_cluster.add_unit(unit.id)
-            current_mission = Mission(responsible_unit=unit.id, mission_type=EXPLORE)
-            assigned_cluster.missions.append(current_mission)
+            assigned_cluster.missions[unit.id] = Mission(mission_type=EXPLORE)
 
-    units_wo_clusters = cluster_controller.get_units_without_clusters(player)
-    # print("Number of Units without Clusters: ", len(units_wo_clusters))
-    
-    # ghost_units = []
+            actions.append(
+                annotate.sidetext(f'1- assign {unit.id} cluster {assigned_cluster.get_centroid().x} {assigned_cluster.get_centroid().y}')
+            )
 
     for cluster in cluster_controller.clusterDict.values():
-        for mission in cluster.missions:
-            unit = get_unit_by_id(mission.responsible_unit, player)
-            mission.change_responsible_unit(unit.id)
+        for ID in cluster.missions:
+            unit = next( (U for U in player.units if U.id == ID), None )
+            cluster.missions[ID].change_responsible_unit(unit)
 
     # for cluster in cluster_controller.clusterDict.values():
     #     for mission in cluster.missions:
@@ -111,12 +129,15 @@ def agent(observation, configuration):
     for cluster in cluster_controller.clusterDict.values():
         # logging.warning(f"Cluster {cluster} has {len(cluster.missions)} missions")
 
-        cluster.assign_targets_to_missions(game_state, player, opponent, BUILD_TILE, observation['step'])
-        cluster.assign_targets_to_missions(game_state, player, opponent, GUARD_CLUSTER, observation['step'])
+        if len(cluster.missions) == 0:
+            continue
+
+        cluster.assign_targets_to_missions(game_state, player, opponent, BUILD_TILE, observation["step"])
+        cluster.assign_targets_to_missions(game_state, player, opponent, GUARD_CLUSTER,observation["step"])
 
         # logging.warning(f"zzz1")
-        cluster.handle_explore_missions(game_stats, minable_resources, player)
-        cluster.assign_targets_to_missions(game_state, player, opponent, EXPLORE, observation['step'])
+        actions.extend(cluster.handle_explore_missions(game_stats, minable_resources, player))
+        cluster.assign_targets_to_missions(game_state, player, opponent, EXPLORE, observation["step"])
 
         # if cluster.missions != []:
             # print(cluster.missions[0].target_pos, cluster.missions[0].mission_type)
@@ -140,13 +161,9 @@ def agent(observation, configuration):
     units_without_target_positions = set()
 
     for cluster in cluster_controller.clusterDict.values():
-        for mission in cluster.missions:
+        for _, mission in cluster.missions.items():
             if mission.target_pos is None:
-                unit = get_unit_by_id(mission.responsible_unit, player)
-                
-                # This condition is not supposed to be here
-                # Should look into this
-                # if unit is not None:
+                unit = mission.responsible_unit
                 units_without_target_positions.add((unit.pos.x, unit.pos.y))
     
     
@@ -156,10 +173,9 @@ def agent(observation, configuration):
 
     units_at_target_positions = set()
     for cluster in cluster_controller.clusterDict.values():
-        for mission in cluster.missions:
-            if mission.target_pos is not None and mission.responsible_unit is not None:
-                unit = get_unit_by_id(mission.responsible_unit, player)
-                if mission.target_pos.equals(unit.pos):
+        for _, mission in cluster.missions.items():
+            if mission.target_pos is not None and mission.responsible_unit is not None and mission.target_pos.equals(unit.pos):
+                    unit = mission.responsible_unit
                     units_at_target_positions.add((unit.pos.x, unit.pos.y))
     occupied_positions = occupied_positions.union(units_at_target_positions)
 
@@ -192,11 +208,24 @@ def agent(observation, configuration):
         
         required_moves.extend(moves)
 
+        # if step == 18:
+        #     logging.info(f"Cluster at {cluster.get_centroid().x} {cluster.get_centroid().y}")
+        #     for move in moves:
+        #         logging.info(f"Unit: {move['unit_id']}")
+        #         logging.info(f"Direction: {move['movements'][0]['direction']}")
+        #         logging.info(f"Target: {move['movements'][0]['next_pos'].x} {move['movements'][0]['next_pos'].y}")
+        #         logging.info(f"Approved: {move['approved']}")
+        #         logging.info(f"Mission: {cluster.missions[move['unit_id']].mission_type}")
+
     # print(required_moves)
 
     
     # Add the valid actions (those who have occupied positions are not valid)
     actions.extend(negotiate_actions(occupied_positions, required_moves))
+
+    for cluster in cluster_controller.clusterDict.values():
+        annotations = get_annotations(cluster.missions, player)
+        actions.extend(annotations)
 
     actions.extend(get_city_actions(game_state,
                                     game_stats,
@@ -204,7 +233,8 @@ def agent(observation, configuration):
                                     cluster_controller.clusterDict, 
                                     my_id,
                                     opponent,
-                                    opponent_id))
+                                    opponent_id,
+                                    step))
 
 
     # resource_tiles: list[Cell] = []
@@ -264,6 +294,28 @@ def agent(observation, configuration):
     # time.sleep(3)
 
     # print(actions)
-    logging.debug("------------------------------")
+    # if observation["step"] == 0:
+    #     logging.warning(f"Actions: {actions}")
+    # logging.debug("------------------------------")
 
+    # logging.info(f"Step {observation['step']}:")
+    # logging.info("----------------------------------")
+    # for cluster in cluster_controller.clusterDict.values():
+    #     logging.info(f"Cluster At {cluster.get_centroid().x} {cluster.get_centroid().y} has {len(cluster.missions)} missions")
+    #     for mission in cluster.missions.values():
+    #         if mission.responsible_unit and mission.target_pos:
+    #             logging.info(f"Mission {mission.mission_type} has target {mission.target_pos.x} {mission.target_pos.y} and unit {mission.responsible_unit.id}")
+
+    
+    # if step < 50:
+    #     logging.info(f"Step {step}")
+    #     for cluster in cluster_controller.clusterDict.values():
+    #         logging.info(f"Cluster At {cluster.get_centroid().x} {cluster.get_centroid().y}")
+    #         logging.info(f"Units: {cluster.units}")
+    #         logging.info(f"Exposed P: {sorted([(c.x, c.y) for c in cluster.exposed_perimeter])}")
+    #         logging.info(f"Missions No {len(cluster.missions)}")
+    #     sorted(actions)
+    #     logging.info(f"Actions: {actions}")
+    #     logging.info(f"______________________________________________________________________________________________________________________")
+    
     return actions

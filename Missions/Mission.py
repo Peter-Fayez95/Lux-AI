@@ -29,7 +29,7 @@ class Mission:
         self.target_pos = target_pos
 
     def get_moves(self, player):
-        unit = get_unit_by_id(self.responsible_unit, player)
+        unit = self.responsible_unit
         target_pos = self.target_pos
 
         directions = get_directions(

@@ -10,6 +10,7 @@ import logging
 import math
 from copy import deepcopy
 from functools import cmp_to_key
+from collections import defaultdict
 
 from lux.game_map import Cell, Position, Resource
 from lux.constants import Constants
@@ -127,17 +128,28 @@ def get_unit_by_id(id1, player) -> Unit:
         
 
 def get_perimeter(cells, game_state):
-    distinct_cells = set()
-    for cell in cells:
-        # logging.info(f"CELL: [{cell.pos.x, cell.pos.y}]")
-        for neighbour in get_cell_neighbours_four(cell, game_state):
-            
-            if not neighbour.has_resource():
-                distinct_cells.add((neighbour.pos.x, neighbour.pos.y))
+    perimeter_dict = defaultdict()
 
-    
-    # distinct_cells = sorted(list(distinct_cells))
-    return distinct_cells
+    for tile in cells:
+        n = tile.pos.translate('n', 1)
+        s = tile.pos.translate('s', 1)
+        e = tile.pos.translate('e', 1)
+        w = tile.pos.translate('w', 1)
+
+        sides = [n, s, e, w]
+
+        for side in sides:
+            side_tile = next(
+                (t for t in cells if t.pos.equals(side)),
+                None
+            )
+
+            if side_tile is None:
+                if (side.x >= 0 and side.x < game_state.map.width) and \
+                        (side.y >= 0 and side.y < game_state.map.height):
+                    perimeter_dict[str(side.x) + str(side.y)] = side
+
+    return list(perimeter_dict.values())
         
 
 
@@ -166,8 +178,7 @@ def get_build_position_score(game_state, opponent, pos, center):
 
     perimeter_score = 0
     for p in perimeter:
-        pos = Position(p[0], p[1])
-        cell = game_state.map.get_cell_by_pos(pos)
+        cell = game_state.map.get_cell_by_pos(p)
         if cell.citytile is not None:
             perimeter_score += 2
 
@@ -178,38 +189,40 @@ def get_build_position_score(game_state, opponent, pos, center):
 
 def get_important_positions(game_state, opponent, available_targets, missions, player):
 
-    sum_x = 0
-    sum_y = 0
+    sum_x = sum([
+        mission.responsible_unit.pos.x for _, mission in missions.items()
+        if mission.responsible_unit is not None
+    ])
+    sum_y = sum([
+        mission.responsible_unit.pos.y for _, mission in missions.items()
+        if mission.responsible_unit is not None
+    ])
 
-    for mission in missions:
-        if mission.responsible_unit is None:
-            continue
+    average_x = sum_x / len(missions)
+    average_y = sum_y / len(missions)
 
-        unit = get_unit_by_id(mission.responsible_unit, player)
-        sum_x += unit.pos.x
-        sum_y += unit.pos.y
-
-    
-
-    mean_x = sum_x / len(missions)
-    mean_y = sum_y / len(missions)
-
-    center = Position(mean_x, mean_y)
+    units_centroid = Position(average_x, average_y)
 
     def compare(pos1, pos2):
-        return pos2[0] - pos1[0]
+        return pos2['score'] - pos1['score']
 
-    pos_score_vector = []
+    positions_to_be_sorted = []
+    for p in available_targets:
+        score = get_build_position_score(
+            game_state,
+            opponent,
+            p,
+            units_centroid,
+        )
+        positions_to_be_sorted.append({
+            'pos': p,
+            'score': score
+        })
 
+    sorted_positions = sorted(positions_to_be_sorted, key=cmp_to_key(compare))
 
-    for pos in available_targets:
-        score = get_build_position_score(game_state, opponent, pos, center)
-
-        pos_score_vector.append([score, pos])
-
-    pos_score_vector.sort(key=cmp_to_key(compare))
-
-    return [pos_score[1] for pos_score in pos_score_vector][:len(missions)]
+    # We only return only the number needed.
+    return [p['pos'] for p in sorted_positions][:len(missions)]
 
 def get_directions(src, dest):
     directions = []
@@ -342,7 +355,8 @@ def get_citytile_score(
     game_state,
     player_id,
     opponent,
-    opponent_id
+    opponent_id,
+    step
 ):
     '''
     A simple mathematical model to calculate if a citytile should build a worker.
@@ -358,17 +372,18 @@ def get_citytile_score(
     perimeter_score = len(perimeter)
 
     opponent_citytiles, opponent_units = get_enemy_coverage(
-        [game_state.map.get_cell_by_pos(Position(pos[0], pos[1])) for pos in perimeter],
+        [game_state.map.get_cell_by_pos(pos) for pos in perimeter],
         opponent,
         opponent_id,
     )
     opponent_workers_score = len(opponent_units) + 1
     opponent_citytiles_score = len(opponent_citytiles) + 1
 
+
     # inversely proportional
     player_citytiles = []
     for p in perimeter:
-        cell = game_state.map.get_cell_by_pos(Position(p[0], p[1]))
+        cell = game_state.map.get_cell_by_pos(p)
         if cell.citytile is not None:
             if cell.citytile.team == player_id:
                 player_citytiles.append(cell.citytile)
@@ -377,6 +392,18 @@ def get_citytile_score(
     player_citytiles_score = len(player_citytiles) + 1
 
     no_player_unit_bonus = 10 if len(cluster.units) == 0 else 1
+
+    if step <= 10:
+        logging.info(f"Cluster Resource Cells: {[(c.pos.x, c.pos.y, c.resource.amount) for c in cluster.resource_cells]}")
+        logging.info(f"Resource Cell Score: {resource_cell_score}")
+        logging.info(f"Fuel Score: {fuel_score}")
+        logging.info(f"Perimeter Score: {perimeter_score}")
+        logging.info(f"Opponent Workers Score: {opponent_workers_score}")
+        logging.info(f"Opponent CityTiles Score: {opponent_citytiles_score}")
+        logging.info(f"Player Workers Score: {player_workers_score}")
+        logging.info(f"Player CityTiles Score: {player_citytiles_score}")
+        logging.info(f"No Player Unit Bonus: {no_player_unit_bonus}")
+
 
     numerator = resource_cell_score * fuel_score * perimeter_score * \
         no_player_unit_bonus * opponent_workers_score * \
@@ -395,7 +422,8 @@ def get_city_actions(
     clusters_dict,
     player_id,
     opponent,
-    opponent_id
+    opponent_id,
+    step
 ):
     '''
     This is actually simple. We greedily build worker if possible.
@@ -416,20 +444,21 @@ def get_city_actions(
     for citytile in actionable_citytiles:
         # We do not keep track of which cluster a citytile belongs to.
         # So, we need to find it here.
-        closest_cluster, _ = get_closest_cluster_by_centroid(
+        clus, _ = get_closest_cluster_by_centroid(
             citytile,
             clusters_dict
         )
-        closest_cluster = clusters_dict[closest_cluster]
         citytile_score = 0
         
-        if closest_cluster is not None:
+        if clus is not None:
+            closest_cluster = clusters_dict[clus]
             citytile_score = get_citytile_score(
                 closest_cluster,
                 game_state,
                 player_id,
                 opponent,
-                opponent_id
+                opponent_id,
+                step
             )
 
         citytiles_to_be_sorted.append({
@@ -457,6 +486,10 @@ def get_city_actions(
                 actions.append(
                     citytile['citytile'].research()
                 )
+    
+    if step < 50:
+        logging.info(f"Sorted CityTiles: {[(x['citytile'].pos.x, x['citytile'].pos.y, x['score']) for x in sorted_citytiles]}")
+        logging.info(f"_________________________________-")
 
     return actions
 

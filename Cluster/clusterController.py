@@ -1,4 +1,5 @@
 import logging
+from functools import cmp_to_key
 import math
 from copy import deepcopy
 
@@ -128,7 +129,7 @@ class ClusterController:
             self.rank[ClusterRep2] += 1
 
     def update_clusters(self, game_state, player):
-        for Clusterid, cluster in self.clusterDict.items():
+        for cluster in self.clusterDict.values():
             cluster.update_cluster(game_state, player)
 
     def update_missions(self, game_state, player):
@@ -138,14 +139,13 @@ class ClusterController:
             cluster.update_missions(game_state, player)
 
 
-    def assign_worker(self, worker, game_state, player, player_id, opponent):
+
+    # This function is faulty, Needs to be fixed
+    def assign_worker(self, worker, game_state, player, player_id, opponent, step):
         # Scores[Int -> Score]
         # For Each cluster represented by id, get its score for this worker
 
-        copyDict = {}
-
-        for id, cluster in self.clusterDict.items():
-            copyDict[id] = cluster
+        copyDict = self.clusterDict.copy()
 
         # for id, cluster in self.clusterDict.items():
         #     print("Original Cluster: ", cluster)
@@ -153,25 +153,38 @@ class ClusterController:
         # for id, cluster in copyDict.items():
         #     print("Copy Cluster: ", cluster)
 
+        # if step == 11:
+        #     logging.warning(f"LOSOSO")
+
         for id, cluster in self.clusterDict.items():
             if not player.researched_coal() and cluster.resource_type == "coal":
                 del copyDict[id]
             if not player.researched_uranium() and cluster.resource_type == "uranium":
                 del copyDict[id]
 
-        maximum_score = -math.inf
-        assigned_cluster = None
+        cluster_scores = []
 
         for cluster in copyDict.values():
             current_cluster_score = cluster.get_cluster_score_for_worker(worker, game_state, player_id, opponent)
 
-            if current_cluster_score > maximum_score:
-                maximum_score = current_cluster_score
-                assigned_cluster = cluster
+            cluster_scores.append({
+                'cluster': cluster,
+                'score': current_cluster_score
+            })
+            # if step == 11:
+            #     logging.warning(f"Cluster At {cluster.get_centroid()} Score: {current_cluster_score}")
 
-        # print(assigned_cluster)
+        def compare_final_score(c1, c2):
+            return c2['score'] - c1['score']
 
-        return assigned_cluster
+        sorted_clusters = sorted(
+            cluster_scores, key=cmp_to_key(compare_final_score)
+        )
+
+        if len(sorted_clusters) > 0:
+            return sorted_clusters[0]['cluster'], sorted_clusters[0]['score']
+
+        return None, 0
     
     def get_units_without_clusters(self, player):
         units_with_clusters = []
