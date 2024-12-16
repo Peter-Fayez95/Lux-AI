@@ -420,10 +420,10 @@ def get_city_actions(
             citytile,
             clusters_dict
         )
-        closest_cluster = clusters_dict[closest_cluster]
         citytile_score = 0
         
         if closest_cluster is not None:
+            closest_cluster = clusters_dict[closest_cluster]
             citytile_score = get_citytile_score(
                 closest_cluster,
                 game_state,

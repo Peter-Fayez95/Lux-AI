@@ -186,7 +186,7 @@ class Cluster:
         ''' 
 
         # Update Cluster Resource Cells
-        new_resource_cells = get_resources_from_cells(game_state, self.resource_cells)
+        new_resource_cells = get_resources_from_cells(game_state, [cell.pos for cell in self.resource_cells])
         self.resource_cells = new_resource_cells
 
         # Update Cluster Units

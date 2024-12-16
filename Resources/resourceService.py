@@ -34,13 +34,14 @@ def get_minable_resource_cells(
     ]
     return minable_resource_cells
 
-def get_resources_from_cells(gamestate, cells: List[Cell]):
+def get_resources_from_cells(gamestate, positions: List[Position]):
     '''
     Given the Cells list `cells`
     return the resource cells from this list
     '''
     resource_cells = []
-    for cell in cells:
+    for pos in positions:
+        cell = gamestate.map.get_cell_by_pos(pos)
         if cell.has_resource():
             resource_cells.append(cell)
     
