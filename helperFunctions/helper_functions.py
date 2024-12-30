@@ -4,14 +4,11 @@
 #
 #
 from lux.game_constants import GAME_CONSTANTS
-from typing import List
 
-import logging
 import math
-from copy import deepcopy
 from functools import cmp_to_key
 
-from lux.game_map import Cell, Position, Resource
+from lux.game_map import Position
 from lux.constants import Constants
 
 from Map.mapService import get_perimeter

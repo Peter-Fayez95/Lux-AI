@@ -1,4 +1,4 @@
-from lux.game_map import Cell, Position, Resource
+from lux.game_map import Cell, Position
 from lux.constants import Constants
 from copy import deepcopy
 from typing import List
