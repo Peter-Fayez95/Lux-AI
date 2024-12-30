@@ -7,7 +7,7 @@ from Cluster.Cluster import Cluster
 # from agent import game_state
 from lux.game_map import Cell
 
-from helperFunctions.helper_functions import same_resource
+from Resources.resourceService import same_resource
 from Map.mapService import get_cell_neighbours_eight
 
 # logging.basicConfig(filename="ClusterController.log", level=logging.INFO)

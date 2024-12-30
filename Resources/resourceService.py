@@ -46,3 +46,6 @@ def get_resources_from_cells(gamestate, positions: List[Position]):
             resource_cells.append(cell)
     
     return resource_cells
+
+def same_resource(cell1 : Cell, cell2 : Cell) -> bool:
+    return cell1.resource.type == cell2.resource.type

@@ -22,22 +22,6 @@ DIRECTIONS = Constants.DIRECTIONS
 
 # TODO: Add unittests for this module
 
-def same_resource(cell1 : Cell, cell2 : Cell) -> bool:
-    return cell1.resource.type == cell2.resource.type
-
-
-def cells_comparator_as_pair(cell1: Cell, cell2: Cell):
-    '''
-    Comparator for cells as a pair
-    '''
-    cell1 = [cell1.pos.x, cell1.pos.y]
-    cell2 = [cell2.pos.x, cell2.pos.y]
-
-    if cell1 < cell2:
-        return -1
-    else:
-        return 1
-
 
 def get_build_position_score(game_state, opponent, pos, center):
     if isinstance(center, tuple):
