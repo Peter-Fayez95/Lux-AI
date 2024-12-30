@@ -13,9 +13,9 @@ from functools import cmp_to_key
 
 from lux.game_map import Cell, Position, Resource
 from lux.constants import Constants
-from lux.game_objects import Unit
 
 from Map.mapService import get_perimeter
+from Units.unitsService import get_unit_by_id
 
 DIRECTIONS = Constants.DIRECTIONS
 
@@ -36,15 +36,6 @@ def cells_comparator_as_pair(cell1: Cell, cell2: Cell):
         return -1
     else:
         return 1
-
-
-
-def get_unit_by_id(id1, player) -> Unit:
-    for unit in player.units:
-        if unit.id == id1:
-            return unit
-    
-        
 
 
 def get_build_position_score(game_state, opponent, pos, center):

@@ -1,4 +1,4 @@
-from helperFunctions.helper_functions import get_unit_by_id
+from Units.unitsService import get_unit_by_id
 from Map.mapService import get_directions
 from lux.game_map import Position
 

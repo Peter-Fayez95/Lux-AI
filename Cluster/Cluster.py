@@ -7,6 +7,7 @@ from lux.constants import Constants
 from lux.game_constants import GAME_CONSTANTS
 from helperFunctions.helper_functions import *
 from Map.mapService import get_cell_neighbours_four, get_nearest_position
+from Units.unitsService import get_unit_by_id
 
 from Resources.resourceService import get_resources_from_cells
 
