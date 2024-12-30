@@ -1,4 +1,3 @@
-
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 
@@ -11,36 +10,38 @@ from helperFunctions.helper_functions import get_unit_by_id
 
 
 def remove_finished_tile_missions(missions, game_state):
-    '''
+    """
     Remove all finished BUILD_TILE missions
-    '''
+    """
     for mission in missions.copy():
         if mission.target_pos is None:
             continue
-        
+
         if mission.mission_type == BUILD_TILE:
             target_pos = game_state.map.get_cell_by_pos(mission.target_pos)
-            
+
             if target_pos.citytile:
                 del missions[missions.index(mission)]
-    
+
+
 def remove_finished_explore_missions(missions, player):
-    '''
+    """
     Remove all finished EXPLORE missions
-    '''
+    """
     for mission in missions.copy():
         if mission.target_pos is None:
             continue
-        
+
         if mission.mission_type == EXPLORE:
             unit = get_unit_by_id(mission.responsible_unit, player)
             if unit.pos.equals(mission.target_pos) and mission.allow_target_change:
                 del missions[missions.index(mission)]
 
+
 def remove_finished_guard_missions(missions, player):
-    '''
+    """
     Remove all finished GUARD_CLUSTER missions
-    '''
+    """
     for mission in missions.copy():
         if mission.target_pos is None:
             continue
@@ -50,17 +51,20 @@ def remove_finished_guard_missions(missions, player):
             if mission.target_pos == unit.pos:
                 del missions[missions.index(mission)]
 
+
 def remove_missions_with_no_units(missions, units):
-    '''
+    """
     Remove all missions with no responsible units
-    '''
+    """
     for mission in missions.copy():
-        if mission.responsible_unit is not None and mission.responsible_unit not in units:
+        if (
+            mission.responsible_unit is not None
+            and mission.responsible_unit not in units
+        ):
             del missions[missions.index(mission)]
 
 
 def negotiate_missions(missions, units, targets):
-    # print("Negotiating missions")
     unit_positions = [(unit.pos.x, unit.pos.y) for unit in units]
 
     targets_to_positions = targets
@@ -72,11 +76,7 @@ def negotiate_missions(missions, units, targets):
     def distance_to(pos1, pos2):
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
-    distance_matrix = cdist(
-        unit_positions,
-        target_positions,
-        distance_to
-    )
+    distance_matrix = cdist(unit_positions, target_positions, distance_to)
 
     row_ind, col_ind = linear_sum_assignment(distance_matrix)
     for i in range(len(row_ind)):
@@ -85,6 +85,5 @@ def negotiate_missions(missions, units, targets):
         for mission in missions:
             if mission.responsible_unit == key:
                 mission.change_target_pos(Position(target[0], target[1]))
-                # print(f"Unit {key} assigned to target {target}")
 
     return missions
