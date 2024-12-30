@@ -445,9 +445,9 @@ def get_city_actions(
         key=cmp_to_key(compare)
     )
 
+    research_count = 0
     for citytile in sorted_citytiles:
-        if units_count < units_capacity and \
-                game_state_info['turns_to_night'] > 4:
+        if (units_count < units_capacity and game_state_info['turns_to_night'] > 4) or player.research_points + research_count >= 200:
             actions.append(
                 citytile['citytile'].build_worker()
             )
@@ -457,6 +457,7 @@ def get_city_actions(
                 actions.append(
                     citytile['citytile'].research()
                 )
+            research_count += 1
 
     return actions
 
