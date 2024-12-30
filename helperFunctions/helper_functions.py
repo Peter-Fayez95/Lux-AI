@@ -16,10 +16,6 @@ from lux.constants import Constants
 from lux.game_objects import Unit
 
 DIRECTIONS = Constants.DIRECTIONS
-# DIRECTIONS = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
-
-
-# logging.basicConfig(filename="helper_functions.log", level=logging.INFO)
 
 # TODO: Add unittests for this module
 
@@ -99,9 +95,6 @@ def get_nearest_position(C: Position, cells: List[Position]):
     '''
     nearest_position = None
     smallest_distance = math.inf
-    # logging.warning(f"cells: {cells}")
-    # logging.warning(f"C type: {type(C)}")
-    # C = Position(C[0], C[1])
 
 
     for cell in cells:
@@ -121,22 +114,18 @@ def get_unit_by_id(id1, player) -> Unit:
     for unit in player.units:
         if unit.id == id1:
             return unit
-        
-    print(f"Unit with id {id1} not found")
     
         
 
 def get_perimeter(cells, game_state):
     distinct_cells = set()
     for cell in cells:
-        # logging.info(f"CELL: [{cell.pos.x, cell.pos.y}]")
         for neighbour in get_cell_neighbours_four(cell, game_state):
             
             if not neighbour.has_resource():
                 distinct_cells.add((neighbour.pos.x, neighbour.pos.y))
 
     
-    # distinct_cells = sorted(list(distinct_cells))
     return distinct_cells
         
 

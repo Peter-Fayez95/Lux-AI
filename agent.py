@@ -61,18 +61,14 @@ def agent(observation, configuration):
 
     # Get resources that can be mined
     minable_resources = get_minable_resource_cells(player, resource_cells)
-    # logging.info(f"Number of Minable Resource Cells: {len(minable_resources)}")
-
+    
     cluster_controller.update_clusters(game_state, player)
     cluster_controller.update_missions(game_state, player)
 
     # Units without home
     units_wo_clusters = cluster_controller.get_units_without_clusters(player)
-    # print("DDDDD", units_wo_clusters)
 
 
-    # if observation["step"] == 0:
-    #     print(f"Number of Units without Clusters: {len(units_wo_clusters)}")
 
     # Assign Missions to units without homes
     for unit in units_wo_clusters:
@@ -94,32 +90,14 @@ def agent(observation, configuration):
             unit = get_unit_by_id(mission.responsible_unit, player)
             mission.change_responsible_unit(unit.id)
 
-    # for cluster in cluster_controller.clusterDict.values():
-    #     for mission in cluster.missions:
-    #         if mission.responsible_unit is None:
-    #             logging.warning(f"Mission {mission} has no responsible unit")
-
-    # for unit in player.units:
-    #     logging.info(f"MY Unit {unit.id}")
-
-    # for unit in ghost_units:
-    #     logging.warning(f"{unit} is a ghost unit")
-    
-    # print("------------------")
 
     # Now, all units have missions assigned to them
     for cluster in cluster_controller.clusterDict.values():
-        # logging.warning(f"Cluster {cluster} has {len(cluster.missions)} missions")
-
         cluster.assign_targets_to_missions(game_state, player, opponent, BUILD_TILE, observation['step'])
         cluster.assign_targets_to_missions(game_state, player, opponent, GUARD_CLUSTER, observation['step'])
 
-        # logging.warning(f"zzz1")
         cluster.handle_explore_missions(game_stats, minable_resources, player)
         cluster.assign_targets_to_missions(game_state, player, opponent, EXPLORE, observation['step'])
-
-        # if cluster.missions != []:
-            # print(cluster.missions[0].target_pos, cluster.missions[0].mission_type)
 
 
 
@@ -144,8 +122,6 @@ def agent(observation, configuration):
             if mission.target_pos is None:
                 unit = get_unit_by_id(mission.responsible_unit, player)
                 
-                # This condition is not supposed to be here
-                # Should look into this
                 # if unit is not None:
                 units_without_target_positions.add((unit.pos.x, unit.pos.y))
     
@@ -182,7 +158,6 @@ def agent(observation, configuration):
         if len(cluster.missions) == 0:
             continue
         
-        # print(f"This cluster has {len(cluster.missions)} missions")
         actions.extend(cluster.get_build_actions(game_stats, player))
         
     
@@ -205,65 +180,4 @@ def agent(observation, configuration):
                                     my_id,
                                     opponent,
                                     opponent_id))
-
-
-    # resource_tiles: list[Cell] = []
-    # for y in range(height):
-    #     for x in range(width):
-    #         cell = game_state.map.get_cell(x, y)
-    #         if cell.has_resource():
-    #             resource_tiles.append(cell)
-
-    # # we iterate over all our units and do something with them
-    # for unit in player.units:
-    #     if unit.is_worker() and unit.can_act():
-    #         closest_dist = math.inf
-    #         closest_resource_tile = None
-    #         if unit.get_cargo_space_left() > 0:
-    #             # if the unit is a worker and we have space in cargo, lets find the nearest resource tile and try to mine it
-    #             for resource_tile in resource_tiles:
-    #                 if resource_tile.resource.type == Constants.RESOURCE_TYPES.COAL and not player.researched_coal(): continue
-    #                 if resource_tile.resource.type == Constants.RESOURCE_TYPES.URANIUM and not player.researched_uranium(): continue
-    #                 dist = resource_tile.pos.distance_to(unit.pos)
-    #                 if dist < closest_dist:
-    #                     closest_dist = dist
-    #                     closest_resource_tile = resource_tile
-    #             if closest_resource_tile is not None:
-    #                 actions.append(unit.move(unit.pos.direction_to(closest_resource_tile.pos)))
-    #         else:
-    #             # if unit is a worker and there is no cargo space left, and we have cities, lets return to them
-    #             if len(player.cities) > 0:
-    #                 closest_dist = math.inf
-    #                 closest_city_tile = None
-    #                 for k, city in player.cities.items():
-    #                     for city_tile in city.citytiles:
-    #                         dist = city_tile.pos.distance_to(unit.pos)
-    #                         if dist < closest_dist:
-    #                             closest_dist = dist
-    #                             closest_city_tile = city_tile
-    #                 if closest_city_tile is not None:
-    #                     move_dir = unit.pos.direction_to(closest_city_tile.pos)
-    #                     actions.append(unit.move(move_dir))
-
-
-    # you can add debug annotations using the functions in the annotate object
-    # actions.append(annotate.circle(0, 0))
-    
-    
-    
-    # logging.info(f"Number of Clusters: {len(controller.clusterDict)}")
-    # for clusterid, cluster in controller.clusterDict.items():
-    #     logging.info(f"Cluster #{clusterid} Properties:")
-    #     logging.info(f"Cluster Resource Type: {cluster.resource_type}")
-    #     logging.info(f"Cluster Resource Cells: {[cell.pos.__str__() for cell in cluster.resource_cells]}")
-    #     logging.info(f"Cluster Perimeter: {cluster.get_perimeter(game_state)}")
-    #     logging.info(f"Cluster Fuel: {cluster.get_total_fuel()}")
-    #     logging.info(f"Cluster Centroid: {cluster.get_centroid()}")
-    #     logging.info(f"{'-' * 30}")
-
-    # time.sleep(3)
-
-    # print(actions)
-    logging.debug("------------------------------")
-
     return actions

@@ -36,15 +36,12 @@ class ClusterController:
         self.woodClusters = []
         self.coalClusters = []
         self.uraniumClusters = []
-        # logging.info("ClusterController Started")
 
     def get_cell_value(self, x: int, y: int):
             return x * self.width + y
 
     # This method is only called once (at the game start)
     def getClustersRolling(self, width, height, game_state):
-        # logging.info("Getting Clusters Rolling")
-        # print("Getting Clusters Rolling")
         visited_cell = [[False for _ in range(height)] for _ in range(width)]
 
 
@@ -68,8 +65,6 @@ class ClusterController:
                 
                 if cell.has_resource() and not visited_cell[x][y]:
                     cluster_cells = []
-                    
-                    # logging.info(f"This cell has resources: {cell}")
                     
                     # Start DFS for this cluster
                     dfs(x, y, cluster_cells, game_state)
@@ -106,12 +101,10 @@ class ClusterController:
         
     # Check if two cells belong to the same cluster
     def isSameCluster(self, cell1: Cell, cell2: Cell):
-        # logging.info("cell from isSameCluster:", cell1, cell2)
         return self.findCluster(cell1) == self.findCluster(cell2)
     
     # Union two Clusters
     def unionClusters(self, cell1: Cell, cell2: Cell):
-        # logging.info("cell from unionClusters:", cell1, cell2)
         if self.isSameCluster(cell1, cell2):
             return
         
@@ -132,8 +125,6 @@ class ClusterController:
             cluster.update_cluster(game_state, player)
 
     def update_missions(self, game_state, player):
-        # logging.debug(f"Updating Missions for Step {step}")
-        # print(f"Updating Missions for Step {step}")
         for cluster in self.clusterDict.values():
             cluster.update_missions(game_state, player)
 

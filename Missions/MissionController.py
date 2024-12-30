@@ -60,7 +60,6 @@ def remove_missions_with_no_units(missions, units):
 
 
 def negotiate_missions(missions, units, targets):
-    # print("Negotiating missions")
     unit_positions = [(unit.pos.x, unit.pos.y) for unit in units]
 
     targets_to_positions = targets
@@ -85,6 +84,5 @@ def negotiate_missions(missions, units, targets):
         for mission in missions:
             if mission.responsible_unit == key:
                 mission.change_target_pos(Position(target[0], target[1]))
-                # print(f"Unit {key} assigned to target {target}")
 
     return missions

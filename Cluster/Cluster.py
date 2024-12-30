@@ -46,7 +46,6 @@ class Cluster:
         '''
         distinct_cells = set()
         for cell in self.resource_cells:
-            # logging.info(f"CELL: [{cell.pos.x, cell.pos.y}]")
             for neighbour in get_cell_neighbours_four(cell, gamestate):
                 
                 if not neighbour.has_resource():
@@ -108,10 +107,6 @@ class Cluster:
         TODO: Refactor this function to reduce time complexity
         '''
         pass
-        # player_workers = []
-
-        # for unit in self.units: # Str
-        #     if unit in player_workers:
 
     def add_unit(self, unit_id):
         '''
@@ -198,7 +193,6 @@ class Cluster:
 
         # Update Perimeter
         self.perimeter = self.get_perimeter(game_state)
-        # print("PERIMETER: ", self.perimeter[0][0], self.perimeter[0][1])
 
         # Update Perimeter Cells without CityTiles
         exposed = []
@@ -222,12 +216,6 @@ class Cluster:
         remove_finished_tile_missions(self.missions, game_state)
         remove_finished_explore_missions(self.missions, player)
         remove_finished_guard_missions(self.missions, player)
-
-    # def remove_missions_with_no_units(self):
-    #     '''
-    #     Remove all missions with no responsible units
-    #     '''
-    #     remove_missions_with_no_units(self.missions, self.units)
 
     def remove_missions_with_no_units(self, missions, units):
         for key in missions.copy():
@@ -255,19 +243,15 @@ class Cluster:
         ]
 
         cells_without_tiles = self.exposed_perimeter
-        # print("sadasdsdsadsadsad", cells_without_tiles)
         build_mission_count = 0
 
         for unit_id in units_without_missions:
             if build_mission_count == len(cells_without_tiles):
                 break
 
-            # pos = Position(cells_without_tiles[build_mission_count][0], cells_without_tiles[build_mission_count][1])
-
             mission = Mission(
                 responsible_unit=unit_id,
                 mission_type=BUILD_TILE,
-                # pos
             )
         
             self.missions.append(mission)
@@ -287,7 +271,6 @@ class Cluster:
             mission = Mission(
                 responsible_unit=unit_id,
                 mission_type=GUARD_CLUSTER,
-                # self.resource_cells[guard_mission_count].pos
             )
 
             self.missions.append(mission)
@@ -317,7 +300,6 @@ class Cluster:
                 units.append(get_unit_by_id(mission.responsible_unit, player))
 
         if len(units) == 0:
-            # print("No units to assign missions")
             return
         
         target_positions = []
