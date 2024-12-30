@@ -1,10 +1,8 @@
-
-
 def get_enemy_coverage(cells, opponent, opponent_id):
-    '''
+    """
     This returns the number of opponent units and
     the number of citytiles in a list of cells given.
-    '''
+    """
     opponent_citytiles = []
     for cell in cells:
         if cell.citytile is not None:
@@ -33,10 +31,11 @@ def get_opponent_tiles(opponent):
 
     return citytiles
 
+
 def get_enemy_tiles(cells, opponent, opponent_id):
-    '''
+    """
     Get the opponent citytiles and units in a list of cells
-    '''
+    """
     opponent_citytiles = []
     for cell in cells:
         if cell.citytile is not None:

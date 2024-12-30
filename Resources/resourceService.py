@@ -3,9 +3,9 @@ from lux.game_map import Cell, Position, RESOURCE_TYPES
 
 
 def get_resources(game_state):
-    '''
+    """
     Get all resource cells in the game map.
-    '''
+    """
     resource_cells = []
     width, height = game_state.map_width, game_state.map_height
     for y in range(height):
@@ -15,13 +15,11 @@ def get_resources(game_state):
                 resource_cells.append(cell)
     return resource_cells
 
-def get_minable_resource_cells(
-    player, 
-    resource_cells: List[Cell]
-    ) -> List[Cell]:
-    '''
+
+def get_minable_resource_cells(player, resource_cells: List[Cell]) -> List[Cell]:
+    """
     Get resource cells that can be mined by the player.
-    '''
+    """
     minable_resource_types = [RESOURCE_TYPES.WOOD]
     if player.researched_coal():
         minable_resource_types.append(RESOURCE_TYPES.COAL)
@@ -29,23 +27,26 @@ def get_minable_resource_cells(
         minable_resource_types.append(RESOURCE_TYPES.URANIUM)
 
     minable_resource_cells = [
-        resource_cell for resource_cell in resource_cells
+        resource_cell
+        for resource_cell in resource_cells
         if resource_cell.resource.type in minable_resource_types
     ]
     return minable_resource_cells
 
+
 def get_resources_from_cells(gamestate, positions: List[Position]):
-    '''
+    """
     Given the Cells list `cells`
     return the resource cells from this list
-    '''
+    """
     resource_cells = []
     for pos in positions:
         cell = gamestate.map.get_cell_by_pos(pos)
         if cell.has_resource():
             resource_cells.append(cell)
-    
+
     return resource_cells
 
-def same_resource(cell1 : Cell, cell2 : Cell) -> bool:
+
+def same_resource(cell1: Cell, cell2: Cell) -> bool:
     return cell1.resource.type == cell2.resource.type
