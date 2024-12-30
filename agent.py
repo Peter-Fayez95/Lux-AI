@@ -14,7 +14,7 @@ from Cluster.clusterController import ClusterController
 from Resources.resourceService import get_resources, get_minable_resource_cells
 from Missions.Mission import Mission
 from Missions.constants import BUILD_TILE, GUARD_CLUSTER, EXPLORE
-from helperFunctions.helper_functions import get_unit_by_id, get_directions, \
+from helperFunctions.helper_functions import get_unit_by_id, \
         negotiate_actions, update_game_stats, get_city_actions, get_opponent_tiles
 
 

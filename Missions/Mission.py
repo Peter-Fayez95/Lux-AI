@@ -1,4 +1,5 @@
-from helperFunctions.helper_functions import get_directions, get_unit_by_id
+from helperFunctions.helper_functions import get_unit_by_id
+from Map.mapService import get_directions
 from lux.game_map import Position
 
 class Mission:
