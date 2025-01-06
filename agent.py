@@ -14,7 +14,7 @@ from helperFunctions.helper_functions import (
     update_game_stats,
     get_city_actions,
 )
-from Units.unitsService import get_unit_by_id
+from Map.mapService import get_occupied_positions
 
 
 logging.basicConfig(filename="Game.log", level=logging.INFO, force=True)
@@ -86,42 +86,7 @@ def agent(observation, configuration):
             game_state, player, opponent, EXPLORE, observation["step"]
         )
 
-    # occupied_positions = opponent tiles + disabled units +
-    #   units without target + units at target - our citytiles
-    occupied_positions = set()
-
-    # Add opponent tiles to occupied positions
-    for city in opponent.cities.values():
-        for city_tile in city.citytiles:
-            occupied_positions.add((city_tile.pos.x, city_tile.pos.y))
-
-    # Add disabled units to occupied positions
-    for unit in player.units:
-        if not unit.can_act():
-            occupied_positions.add((unit.pos.x, unit.pos.y))
-
-    # Add units without target positions to occupied positions
-    for cluster in cluster_controller.clusterDict.values():
-        for mission in cluster.missions:
-            if mission.target_pos is None:
-                unit = get_unit_by_id(mission.responsible_unit, player)
-
-                occupied_positions.add((unit.pos.x, unit.pos.y))
-
-    # Add units at target positions to occupied positions
-    for cluster in cluster_controller.clusterDict.values():
-        for mission in cluster.missions:
-            if mission.target_pos is not None and mission.responsible_unit is not None:
-                unit = get_unit_by_id(mission.responsible_unit, player)
-                if mission.target_pos.equals(unit.pos):
-                    occupied_positions.add((unit.pos.x, unit.pos.y))
-
-    player_citytiles = set()
-    for city in player.cities.values():
-        for city_tile in city.citytiles:
-            player_citytiles.add((city_tile.pos.x, city_tile.pos.y))
-
-    occupied_positions = occupied_positions.difference(player_citytiles)
+    occupied_positions = get_occupied_positions(player, opponent, cluster_controller)
 
     for cluster in cluster_controller.clusterDict.values():
         if len(cluster.missions) == 0:

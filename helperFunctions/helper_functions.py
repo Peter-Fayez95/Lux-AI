@@ -219,9 +219,8 @@ def get_city_actions(
     game_state, game_state_info, player, clusters_dict, player_id, opponent, opponent_id
 ):
     """
-    This is actually simple. We greedily build worker if possible.
-    The only trick is if two citytiles can build only one worker,
-    we decide which gets to build by calculating the score.
+    Build worker if possible.
+    If two tiles need to build, take the one with the highest score.
     """
     actions = []
     units_capacity = sum([len(x.citytiles) for x in player.cities.values()])

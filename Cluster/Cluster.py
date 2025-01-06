@@ -122,6 +122,7 @@ class Cluster:
         """
         Check the score of this cluster for worker
         If the score is high enough, the worker should work for this cluster
+        TODO: Look for a more sophisticated way to calculate the score
         """
         opponent_id = 1 - player_id
 
@@ -201,15 +202,14 @@ class Cluster:
                 exposed.append(cell)
 
         self.exposed_perimeter = exposed
-        # print("EXPOSED PERIMETER: ", self.exposed_perimeter)
 
     def remove_finished_missions(self, game_state, player):
         """
         Remove all finished missions from this cluster
 
-        1- Remove all finished BUILD_TILE missions
-        2- Remove all finished EXPLORE missions
-        3- Remove all finished GUARD_CLUSTER missions
+        - Remove all finished BUILD_TILE missions
+        - Remove all finished EXPLORE missions
+        - Remove all finished GUARD_CLUSTER missions
 
         """
         remove_finished_tile_missions(self.missions, game_state)
@@ -228,7 +228,7 @@ class Cluster:
         1- Remove all finished missions
         2- Remove all missions with no responsible units
         3- Issue new missions:
-            - If the cluster has no units, issue a BUILD_TILE mission (First Priority)
+            - If the cluster has no tiles, issue a BUILD_TILE mission (First Priority)
             - If the cluster has units, issue a GUARD_CLUSTER mission (Second Priority)
         """
         self.remove_missions_with_no_units(self.missions, self.units)
@@ -275,7 +275,7 @@ class Cluster:
             self.missions.append(mission)
             guard_mission_count += 1
 
-        # If we have more workers than required, we release them.
+        # Remove units that are not assigned to any mission
         released_units = [
             unit_id
             for unit_id in self.units
@@ -285,7 +285,6 @@ class Cluster:
         for unit_id in released_units:
             self.remove_unit(unit_id)
 
-        # If cluster resources are depleted, no use for its units.
         if len(self.resource_cells) == 0:
             self.units = []
             self.missions = []
@@ -326,11 +325,6 @@ class Cluster:
         if mission_type == EXPLORE:
             target_positions = self.exposed_perimeter
 
-        if step == 0:
-            logging.debug(
-                f"Mission is {mission.mission_type} and targets at {target_positions}"
-            )
-
         if len(target_positions) == 0:
             return
 
@@ -370,30 +364,14 @@ class Cluster:
         return moves
 
     def handle_explore_missions(self, game_state_info, resource_cells, player):
-        """
-        This function's responsibility is to prevent unit dying at night
-        during long range travel to new clusters.
-        If the unit does not carry enough fuel/resource to survive at night,
-        we direct it to nearest resource to refill.
-        """
-        # logging.warning("Handling explore missions")
-
         for mission in self.missions:
             if mission.mission_type == EXPLORE and mission.responsible_unit is not None:
-
-                logging.debug(
-                    f"Handling explore mission for unit {mission.responsible_unit}"
-                )
                 unit = get_unit_by_id(mission.responsible_unit, player)
-
-                # if unit is None:
-                #     continue
 
                 closest_perimeter, distance = get_nearest_position(
                     unit.pos, self.exposed_perimeter
                 )
 
-                # This is not well thought out.
                 night_turns_required = 0
                 if game_state_info["is_night_time"]:
                     night_turns_required = distance * 4
@@ -406,44 +384,24 @@ class Cluster:
 
                 night_fuel_required = night_turns_required * 4
 
-                # if unit is None:
-                #     continue
-
                 unit_fuel = 100 - unit.get_cargo_space_left()
 
-                # If the unit does not have enough fuel, we want it to go
-                # to nearest resource to collect it.
-                # Currently, this backfires if citytile is in front of it,
-                # it can never leave the cluster because if he hits the citytile,
-                # his/her carried resources are empty
-                # so he/she will not have fuel to travel.
+                # If the worker doesn't have enough fuel
+                # Refill from the nearest resource cell
                 if unit_fuel < night_fuel_required:
-                    logging.debug(
-                        f"Unit {unit.id} does not have enough fuel to survive at night"
-                    )
-                    # actions.append(
-                    #     annotate.sidetext(
-                    #         f'{mission.unit.id} You are going to die at night'
-                    #     )
-                    # )
                     closest_resource_cell, distance = get_nearest_position(
                         unit.pos, resource_cells
                     )
 
-                    # We do not need to go to the resource cell,
-                    # just getting to the adjacent cell is enough
+                    # Get to an adjacent cell
                     if closest_resource_cell is not None:
                         if distance == 1:
                             mission.change_target_pos(unit.pos)
 
                         mission.change_target_pos(closest_resource_cell)
-                        # This is to force non-negotiable target position.
-                        # He/she needs to get resource.
+
+                        # The target of this mission is not negotiable
                         mission.allow_target_change = False
-                        logging.warning(
-                            f"Unit {unit.id} is going to get fuel from {closest_resource_cell}"
-                        )
                 else:
-                    # logging.debug(f"Unit {unit.id} has enough fuel to survive at night, going to explore")
                     mission.change_target_pos(closest_perimeter)
                     mission.allow_target_change = True

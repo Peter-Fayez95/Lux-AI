@@ -4,6 +4,8 @@ from copy import deepcopy
 from typing import List
 import math
 
+from Units.unitsService import get_unit_by_id
+
 
 DIRECTIONS = Constants.DIRECTIONS
 
@@ -112,3 +114,44 @@ def get_directions(src, dest):
     if dest.x - src.x < 0:
         directions.append(DIRECTIONS.WEST)
     return directions
+
+
+def get_occupied_positions(player, opponent, cluster_controller):
+    # occupied_positions = opponent tiles + disabled units +
+    #   units without target + units at target - our citytiles
+    occupied_positions = set()
+
+    # Add opponent tiles to occupied positions
+    for city in opponent.cities.values():
+        for city_tile in city.citytiles:
+            occupied_positions.add((city_tile.pos.x, city_tile.pos.y))
+
+    # Add disabled units to occupied positions
+    for unit in player.units:
+        if not unit.can_act():
+            occupied_positions.add((unit.pos.x, unit.pos.y))
+
+    # Add units without target positions to occupied positions
+    for cluster in cluster_controller.clusterDict.values():
+        for mission in cluster.missions:
+            if mission.target_pos is None:
+                unit = get_unit_by_id(mission.responsible_unit, player)
+
+                occupied_positions.add((unit.pos.x, unit.pos.y))
+
+    # Add units at target positions to occupied positions
+    for cluster in cluster_controller.clusterDict.values():
+        for mission in cluster.missions:
+            if mission.target_pos is not None and mission.responsible_unit is not None:
+                unit = get_unit_by_id(mission.responsible_unit, player)
+                if mission.target_pos.equals(unit.pos):
+                    occupied_positions.add((unit.pos.x, unit.pos.y))
+
+    player_citytiles = set()
+    for city in player.cities.values():
+        for city_tile in city.citytiles:
+            player_citytiles.add((city_tile.pos.x, city_tile.pos.y))
+
+    occupied_positions = occupied_positions.difference(player_citytiles)
+
+    return occupied_positions

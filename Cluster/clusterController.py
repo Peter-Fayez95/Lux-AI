@@ -141,12 +141,6 @@ class ClusterController:
         for id, cluster in self.clusterDict.items():
             copyDict[id] = cluster
 
-        # for id, cluster in self.clusterDict.items():
-        #     print("Original Cluster: ", cluster)
-
-        # for id, cluster in copyDict.items():
-        #     print("Copy Cluster: ", cluster)
-
         for id, cluster in self.clusterDict.items():
             if not player.researched_coal() and cluster.resource_type == "coal":
                 del copyDict[id]
@@ -164,8 +158,6 @@ class ClusterController:
             if current_cluster_score > maximum_score:
                 maximum_score = current_cluster_score
                 assigned_cluster = cluster
-
-        # print(assigned_cluster)
 
         return assigned_cluster
 
