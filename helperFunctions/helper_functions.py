@@ -7,6 +7,7 @@ from lux.game_constants import GAME_CONSTANTS
 
 import math
 from functools import cmp_to_key
+from typeguard import typechecked
 
 from lux.game_map import Position
 from lux.constants import Constants
@@ -20,13 +21,10 @@ DIRECTIONS = Constants.DIRECTIONS
 # TODO: Add unittests for this module
 
 
-def get_build_position_score(game_state, opponent, pos, center):
-    if isinstance(center, tuple):
-        center = Position(center[0], center[1])
-
-    if isinstance(pos, tuple):
-        pos = Position(pos[0], pos[1])
-
+@typechecked
+def get_build_position_score(
+    game_state, opponent, pos: Position, center: Position
+) -> float:
     travel_distance = center.distance_to(pos)
     travel_distance_score = 100 / ((travel_distance**2) + 1)
 
@@ -74,10 +72,10 @@ def get_important_positions(game_state, opponent, available_targets, missions, p
 
     pos_score_vector = []
 
-    for pos in available_targets:
-        score = get_build_position_score(game_state, opponent, pos, center)
+    for cell in available_targets:
+        score = get_build_position_score(game_state, opponent, cell.pos, center)
 
-        pos_score_vector.append([score, pos])
+        pos_score_vector.append([score, cell])
 
     pos_score_vector.sort(key=cmp_to_key(compare))
 

@@ -1,7 +1,8 @@
 from lux.game_map import Cell, Position
 from lux.constants import Constants
 from copy import deepcopy
-from typing import List
+from typing import List, Tuple
+from typeguard import typechecked
 import math
 
 from Units.unitsService import get_unit_by_id
@@ -21,7 +22,8 @@ def inside_map(pos: Position, width, height):
     return (0 <= pos.x < width) and (0 <= pos.y < height)
 
 
-def get_cell_neighbours_four(cell: Cell, gamestate):
+@typechecked
+def get_cell_neighbours_four(cell: Cell, gamestate) -> List[Cell]:
     """
     Get Cells Four Neighbours
     """
@@ -37,6 +39,7 @@ def get_cell_neighbours_four(cell: Cell, gamestate):
     return neighbours
 
 
+@typechecked
 def get_cell_neighbours_eight(cell: Cell, gamestate):
     """
     Get Cells Eight Neighbours
@@ -70,7 +73,8 @@ def get_cell_neighbours_eight(cell: Cell, gamestate):
     return neighbours
 
 
-def get_nearest_position(C: Position, cells: List[Position]):
+@typechecked
+def get_nearest_position(C: Position, cells: List[Position]) -> Tuple:
     """
     Given a cell `C`
     Return the smallest distance and cell to it from a list of cells
@@ -79,10 +83,6 @@ def get_nearest_position(C: Position, cells: List[Position]):
     smallest_distance = math.inf
 
     for cell in cells:
-        if type(cell) == tuple:
-            cell = Position(cell[0], cell[1])
-        elif type(cell) == Cell:
-            cell = cell.pos
         current_distance = C.distance_to(cell)
 
         if current_distance < smallest_distance:

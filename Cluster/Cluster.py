@@ -1,5 +1,6 @@
 import logging
 import math
+from typing import List
 
 from lux.game_map import Cell, Position
 from lux.constants import Constants
@@ -41,20 +42,31 @@ class Cluster:
         self.exposed_perimeter = []
         self.missions = []
 
-    def get_perimeter(self, gamestate) -> list[Cell]:
+    @typechecked
+    def get_perimeter(self, gamestate) -> List[Cell]:
         """
         Get the cluster surronding cell from north, east, west, south
         These cells must be guarded with Units to guard the cluster
         """
-        distinct_cells = set()
+        # Use dict with pos as key to eliminate duplicates
+
+        distinct_cells_dict = {}
         for cell in self.resource_cells:
             for neighbour in get_cell_neighbours_four(cell, gamestate):
-
                 if not neighbour.has_resource():
-                    distinct_cells.add((neighbour.pos.x, neighbour.pos.y))
+                    map_cell = gamestate.map.get_cell_by_pos(neighbour.pos)
+                    # Use position as key
+                    distinct_cells_dict[f"{neighbour.pos.x},{neighbour.pos.y}"] = (
+                        map_cell
+                    )
 
-        distinct_cells = sorted(list(distinct_cells))
-        return distinct_cells
+        # Sort cells by position
+        def cell_position_key(cell):
+            return (cell.pos.x, cell.pos.y)
+
+        # Convert back to sorted list
+        # distinct_cells = sorted(distinct_cells_dict.values())
+        return sorted(list(distinct_cells_dict.values()), key=cell_position_key)
 
     def get_total_fuel(self) -> int:
         """
@@ -130,12 +142,12 @@ class Cluster:
             return 0
 
         perimeter = self.get_perimeter(gamestate)
-        nearest_position, distance = get_nearest_position(worker.pos, perimeter)
+        nearest_position, distance = get_nearest_position(
+            worker.pos, [cell.pos for cell in perimeter]
+        )
 
         # cluster_area represents all of the cluster cells (including its perimeter)
-        cluster_area = [
-            gamestate.map.get_cell_by_pos(Position(pos[0], pos[1])) for pos in perimeter
-        ]
+        cluster_area = self.perimeter
 
         cluster_area.extend(self.resource_cells)
 
@@ -148,7 +160,7 @@ class Cluster:
         # And how many of the perimeter are our citytiles.
         player_citytiles = []
         for cell in perimeter:
-            cell = gamestate.map.get_cell_by_pos(Position(cell[0], cell[1]))
+            cell = gamestate.map.get_cell_by_pos(cell.pos)
             if cell.citytile is not None:
                 if cell.citytile.team == player_id:
                     player_citytiles.append(cell.citytile)
@@ -194,7 +206,7 @@ class Cluster:
         # Update Perimeter Cells without CityTiles
         exposed = []
         for cell in self.perimeter:
-            pos = Position(cell[0], cell[1])
+            pos = cell.pos
             if (
                 game_state.map.get_cell_by_pos(pos).citytile is None
                 and not game_state.map.get_cell_by_pos(pos).has_resource()
@@ -316,7 +328,7 @@ class Cluster:
                 get_important_positions(
                     game_state,
                     opponent,
-                    [cell.pos for cell in self.resource_cells],
+                    self.resource_cells,
                     self.missions,
                     player,
                 )
@@ -369,7 +381,7 @@ class Cluster:
                 unit = get_unit_by_id(mission.responsible_unit, player)
 
                 closest_perimeter, distance = get_nearest_position(
-                    unit.pos, self.exposed_perimeter
+                    unit.pos, [cell.pos for cell in self.exposed_perimeter]
                 )
 
                 night_turns_required = 0
@@ -390,7 +402,7 @@ class Cluster:
                 # Refill from the nearest resource cell
                 if unit_fuel < night_fuel_required:
                     closest_resource_cell, distance = get_nearest_position(
-                        unit.pos, resource_cells
+                        unit.pos, [cell.pos for cell in resource_cells]
                     )
 
                     # Get to an adjacent cell

@@ -2,32 +2,35 @@ from Units.unitsService import get_unit_by_id
 from Map.mapService import get_directions
 from lux.game_map import Position
 
+from typing import Union
+from typeguard import typechecked
 
+
+@typechecked
 class Mission:
     """
     Class for handling missions
 
-    mission_type            str             Type of mission
+    mission_type            int             Type of mission
     target_pos              Position        Target Position
     responsible_unit        str             Responsible unit id
     """
 
-    def __init__(self, responsible_unit=None, mission_type=None, target_pos=None):
+    def __init__(
+        self,
+        responsible_unit: str = None,
+        mission_type: int = None,
+        target_pos: Union[Position, None] = None,
+    ) -> None:
         self.mission_type = mission_type
-
-        if target_pos is not None and isinstance(target_pos, tuple):
-            target_pos = Position(target_pos[0], target_pos[1])
-
         self.target_pos = target_pos
         self.responsible_unit = responsible_unit
         self.allow_target_change = True
 
-    def change_responsible_unit(self, responsible_unit):
+    def change_responsible_unit(self, responsible_unit: str):
         self.responsible_unit = responsible_unit
 
-    def change_target_pos(self, target_pos):
-        if type(target_pos) is tuple:
-            target_pos = Position(target_pos[0], target_pos[1])
+    def change_target_pos(self, target_pos: Position):
         self.target_pos = target_pos
 
     def get_moves(self, player):

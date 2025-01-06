@@ -1,7 +1,10 @@
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
+from typeguard import typechecked
 
-from lux.game_map import Position
+from lux.game_objects import Unit
+from lux.game_map import Cell, Position
+from typing import List, Tuple
 
 
 from Missions.Mission import Mission
@@ -64,24 +67,21 @@ def remove_missions_with_no_units(missions, units):
             del missions[missions.index(mission)]
 
 
-def negotiate_missions(missions, units, targets):
-    unit_positions = [(unit.pos.x, unit.pos.y) for unit in units]
+@typechecked
+def negotiate_missions(missions, units: List[Unit], targets: List[Cell]):
 
-    targets_to_positions = targets
-    if isinstance(targets[0], tuple):
-        targets_to_positions = [Position(t[0], t[1]) for t in targets]
-
-    target_positions = [(target.x, target.y) for target in targets_to_positions]
+    units_positions = [(u.pos.x, u.pos.y) for u in units]
+    targets_positions = [(t.pos.x, t.pos.y) for t in targets]
 
     def distance_to(pos1, pos2):
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
-    distance_matrix = cdist(unit_positions, target_positions, distance_to)
+    distance_matrix = cdist(units_positions, targets_positions, distance_to)
 
     row_ind, col_ind = linear_sum_assignment(distance_matrix)
     for i in range(len(row_ind)):
         key = units[row_ind[i]].id
-        target = target_positions[col_ind[i]]
+        target = targets_positions[col_ind[i]]
         for mission in missions:
             if mission.responsible_unit == key:
                 mission.change_target_pos(Position(target[0], target[1]))
