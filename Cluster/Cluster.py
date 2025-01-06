@@ -343,7 +343,6 @@ class Cluster:
                     and unit.can_act()
                     and game_stats["turns_to_night"] > 5
                 ):
-                    logging.warning("GOT HERE")
                     actions.append(unit.build_city())
 
         return actions
